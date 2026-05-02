@@ -1,4 +1,6 @@
 import { login } from "./actions";
+import Link from "next/link";
+import Image from "next/image";
 
 interface Props {
   searchParams: Promise<{ error?: string }>;
@@ -12,9 +14,11 @@ export default async function LoginPage({ searchParams }: Props) {
       {/* ── Left pane ── */}
       <div className="flex flex-col justify-between px-6 py-10 sm:px-14 min-h-screen">
         {/* Logo */}
-        <div className="text-[22px] font-bold tracking-tight text-[#0E1A2B]">
-          Cleco<span className="text-[#185FA5]">.</span>
-        </div>
+        <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
+          <div className="relative h-9 w-[108px] overflow-hidden">
+            <Image src="/logo.png" alt="cleCo" fill className="object-contain" style={{ transform: "scale(3.5)", transformOrigin: "50% 52%" }} priority />
+          </div>
+        </Link>
 
         {/* Form */}
         <div className="w-full max-w-sm mx-auto py-16 sm:py-20">
