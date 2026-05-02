@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #185FA5;
+  --navy-700: #134d85;
+  --navy-50: #EBF2FA;
+  --navy-100: #D6E5F4;
+  --ink: #0E1A2B;
+  --ink-2: #2B3A4F;
+  --muted: #6B7A8F;
+  --muted-2: #8E9BAE;
+  --line: #E4E8EE;
+  --line-2: #EFF2F6;
+  --bg: #F6F8FB;
+  --surface: #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* Scrollbar for tabs on mobile */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Table card mode on mobile */
+@media (max-width: 640px) {
+  table.invoice-table,
+  table.invoice-table thead,
+  table.invoice-table tbody,
+  table.invoice-table tr,
+  table.invoice-table td,
+  table.invoice-table th {
+    display: block;
+    width: 100%;
+  }
+  table.invoice-table thead { display: none; }
+  table.invoice-table tr {
+    border-bottom: 1px solid var(--line);
+    padding: 14px 14px 12px;
+    position: relative;
+  }
+  table.invoice-table tr:last-child { border-bottom: none; }
+  table.invoice-table td {
+    border: none !important;
+    padding: 3px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    gap: 12px;
+  }
+  table.invoice-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  table.invoice-table td.td-debtor {
+    font-size: 14.5px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed var(--line-2) !important;
+    display: block;
+  }
+  table.invoice-table td.td-debtor::before { display: none; }
+}
+
+/* FAQ details */
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq[open] .chev { transform: rotate(45deg); }
+
+/* Modal animations */
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes popIn { from { transform: translateY(8px) scale(.99); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(100%) } to { transform: none } }
+
+.animate-fadeIn { animation: fadeIn .15s ease; }
+.animate-popIn  { animation: popIn .18s ease; }
+.animate-slideUp { animation: slideUp .22s ease; }
+
+/* Landing page — hero entrance */
+@keyframes landingFadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.landing-fade-in {
+  opacity: 0;
+  animation: landingFadeUp 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Detail side panel */
+@keyframes slideRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slideRight { animation: slideRight 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Hero floating cards */
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-8px); }
+}
+
+.hero-float {
+  opacity: 0;
+  animation:
+    landingFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    heroFloat 5s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0.4s), calc(var(--float-delay, 0.4s) + 0.7s);
+}
