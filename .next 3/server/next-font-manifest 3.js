@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/Users/macbookpro/Desktop/CLECO.CL/portal/src/app/layout":["static/media/103fc5fac08dcb15-s.p.woff2","static/media/558ca1a6aa3cb55e-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';
