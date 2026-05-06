@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!profile) redirect("/auth/login");
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB]">
+    <div className="min-h-screen bg-[#EFF6FF]">
       <TopNav profile={profile} />
       <main className="max-w-[1240px] mx-auto px-4 sm:px-8 py-7 pb-12">
         {children}

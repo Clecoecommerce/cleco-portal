@@ -78,7 +78,7 @@ export default function DashboardPreview() {
           </div>
 
           {/* Dashboard body */}
-          <div className="bg-[#F6F8FB] p-5 sm:p-7">
+          <div className="bg-[#EFF6FF] p-5 sm:p-7">
             {/* Top bar */}
             <div className="flex items-center justify-between mb-6">
               <div>

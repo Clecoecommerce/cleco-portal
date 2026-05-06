@@ -18,21 +18,21 @@ export function MetricCard({
   deltaText,
 }: MetricCardProps) {
   return (
-    <div className="bg-white border border-[#E4E8EE] rounded-[14px] px-[22px] py-5 shadow-sm">
-      <div className="flex items-center gap-2 text-[12.5px] text-[#6B7A8F] font-medium mb-3">
-        <span className="w-[22px] h-[22px] inline-flex items-center justify-center rounded-[6px] bg-[#EBF2FA] text-[#185FA5]">
+    <div className="bg-white border border-[#E2E8F0] rounded-[14px] px-[22px] py-5 shadow-sm">
+      <div className="flex items-center gap-2 text-[12.5px] text-[#6B7280] font-medium mb-3">
+        <span className="w-[22px] h-[22px] inline-flex items-center justify-center rounded-[6px] bg-[#EFF6FF] text-[#2563EB]">
           {icon}
         </span>
         {label}
       </div>
 
       <div
-        className="text-[30px] font-semibold tracking-tight text-[#0E1A2B] leading-none"
+        className="text-[30px] font-semibold tracking-tight text-[#0F172A] leading-none"
         dangerouslySetInnerHTML={{ __html: value }}
       />
 
       {(delta || deltaText) && (
-        <div className="mt-2.5 flex items-center gap-1.5 text-[12.5px] text-[#6B7A8F]">
+        <div className="mt-2.5 flex items-center gap-1.5 text-[12.5px] text-[#6B7280]">
           {delta && (
             <span
               className={cn(

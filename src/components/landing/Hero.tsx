@@ -99,7 +99,7 @@ export default function Hero() {
           >
             <path
               d="M0 6 Q50 1 100 5 Q150 9 200 4"
-              stroke="#185FA5"
+              stroke="#2563EB"
               strokeWidth="2.5"
               strokeLinecap="round"
               opacity="0.35"

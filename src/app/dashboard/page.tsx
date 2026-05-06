@@ -40,13 +40,13 @@ export default async function DashboardPage() {
   return (
     <>
       <div className="mb-6">
-        <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#6B7A8F] mb-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#6B7280] mb-2">
           Panel principal
         </p>
-        <h1 className="text-[22px] font-semibold tracking-tight text-[#0E1A2B] mb-1">
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#0F172A] mb-1">
           Buenos días, {firstName}
         </h1>
-        <p className="text-[13.5px] text-[#6B7A8F]">
+        <p className="text-[13.5px] text-[#6B7280]">
           Resumen de tu cartera al{" "}
           {new Date().toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}.
         </p>
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         <MetricCard
           icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 6h18M3 12h18M3 18h12"/></svg>}
           label="Monto en gestión"
-          value={`<span class='text-[#8E9BAE] font-medium text-[16px] mr-1'>$</span>${montoEnGestion.toLocaleString("es-CL")}`}
+          value={`<span class='text-[#9CA3AF] font-medium text-[16px] mr-1'>$</span>${montoEnGestion.toLocaleString("es-CL")}`}
           delta="+5,2%"
           deltaVariant="amber"
           deltaText="vs mes anterior"
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
         <MetricCard
           icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="20 6 9 17 4 12"/></svg>}
           label="Recuperado este mes"
-          value={`<span class='text-[#8E9BAE] font-medium text-[16px] mr-1'>$</span>${recuperado.toLocaleString("es-CL")}`}
+          value={`<span class='text-[#9CA3AF] font-medium text-[16px] mr-1'>$</span>${recuperado.toLocaleString("es-CL")}`}
           delta="+18%"
           deltaText="vs mes anterior"
         />
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
         profileId={user.id}
       />
 
-      <p className="mt-6 text-center text-[12px] text-[#8E9BAE]">
+      <p className="mt-6 text-center text-[12px] text-[#9CA3AF]">
         Cleco SpA · Cobranza extrajudicial certificada · contacto@cleco.cl · +56 2 2000 0000
       </p>
     </>

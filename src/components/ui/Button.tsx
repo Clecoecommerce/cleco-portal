@@ -16,11 +16,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           size === "md" && "h-11 px-[18px] text-[14px]",
           size === "sm" && "h-9 px-3.5 text-[13px]",
           variant === "primary" &&
-            "bg-[#185FA5] text-white hover:bg-[#134d85]",
+            "bg-[#2563EB] text-white hover:bg-[#1d4ed8]",
           variant === "secondary" &&
-            "bg-white text-[#2B3A4F] border-[#E4E8EE] hover:bg-[#EFF2F6]",
+            "bg-white text-[#1E293B] border-[#E2E8F0] hover:bg-[#F1F5F9]",
           variant === "ghost" &&
-            "bg-transparent text-[#2B3A4F] hover:bg-[#EFF2F6]",
+            "bg-transparent text-[#1E293B] hover:bg-[#F1F5F9]",
           className
         )}
         {...props}
@@ -48,7 +48,7 @@ export function IconButton({
       title={title}
       onClick={onClick}
       className={cn(
-        "w-9 h-9 rounded-[6px] border border-[#E4E8EE] bg-white text-[#2B3A4F] inline-flex items-center justify-center hover:bg-[#EFF2F6] transition-colors",
+        "w-9 h-9 rounded-[6px] border border-[#E2E8F0] bg-white text-[#1E293B] inline-flex items-center justify-center hover:bg-[#F1F5F9] transition-colors",
         className
       )}
     >

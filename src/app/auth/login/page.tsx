@@ -22,13 +22,13 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* Form */}
         <div className="w-full max-w-sm mx-auto py-16 sm:py-20">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B7A8F] mb-5">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B7280] mb-5">
             Portal de clientes
           </p>
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#0E1A2B] mb-2 leading-tight">
+          <h1 className="text-[28px] font-semibold tracking-tight text-[#0F172A] mb-2 leading-tight">
             Ingresa a tu cuenta
           </h1>
-          <p className="text-[14.5px] text-[#6B7A8F] mb-9">
+          <p className="text-[14.5px] text-[#6B7280] mb-9">
             Gestiona tus facturas en cobranza y revisa el estado de tus recuperos.
           </p>
 
@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: Props) {
 
           <form action={login} className="space-y-[18px]">
             <div>
-              <label htmlFor="email" className="block text-[12.5px] font-medium text-[#2B3A4F] mb-1.5">
+              <label htmlFor="email" className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">
                 Correo electrónico
               </label>
               <input
@@ -50,12 +50,12 @@ export default async function LoginPage({ searchParams }: Props) {
                 required
                 autoComplete="email"
                 placeholder="contacto@empresa.cl"
-                className="w-full h-11 px-3.5 border border-[#E4E8EE] rounded-[10px] text-[14.5px] text-[#0E1A2B] placeholder-[#8E9BAE] focus:outline-none focus:border-[#185FA5] focus:ring-2 focus:ring-[#185FA5]/12 transition-all"
+                className="w-full h-11 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14.5px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-[12.5px] font-medium text-[#2B3A4F] mb-1.5">
+              <label htmlFor="password" className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">
                 Contraseña
               </label>
               <input
@@ -65,47 +65,47 @@ export default async function LoginPage({ searchParams }: Props) {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full h-11 px-3.5 border border-[#E4E8EE] rounded-[10px] text-[14.5px] text-[#0E1A2B] placeholder-[#8E9BAE] focus:outline-none focus:border-[#185FA5] focus:ring-2 focus:ring-[#185FA5]/12 transition-all"
+                className="w-full h-11 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14.5px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all"
               />
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-[13px] text-[#2B3A4F] cursor-pointer">
-                <input type="checkbox" className="accent-[#185FA5]" />
+              <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
+                <input type="checkbox" className="accent-[#2563EB]" />
                 Recordarme
               </label>
-              <a href="#" className="text-[13px] text-[#185FA5] hover:text-[#134d85] hover:underline">
+              <a href="#" className="text-[13px] text-[#2563EB] hover:text-[#1d4ed8] hover:underline">
                 ¿Olvidaste tu contraseña?
               </a>
             </div>
 
             <button
               type="submit"
-              className="w-full h-11 bg-[#185FA5] hover:bg-[#134d85] active:translate-y-px text-white text-[14px] font-semibold rounded-[10px] transition-all mt-2"
+              className="w-full h-11 bg-[#2563EB] hover:bg-[#1d4ed8] active:translate-y-px text-white text-[14px] font-semibold rounded-[10px] transition-all mt-2"
             >
               Ingresar
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[13px] text-[#6B7A8F]">
+          <p className="mt-6 text-center text-[13px] text-[#6B7280]">
             ¿Aún no tienes cuenta?{" "}
-            <a href="#" className="text-[#185FA5] hover:underline">Solicita acceso</a>
+            <a href="#" className="text-[#2563EB] hover:underline">Solicita acceso</a>
           </p>
         </div>
 
         {/* Footer */}
-        <footer className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-[12px] text-[#6B7A8F] gap-2">
+        <footer className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-[12px] text-[#6B7280] gap-2">
           <span>© 2026 Cleco SpA · Santiago, Chile</span>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-[#185FA5]">Términos</a>
-            <a href="#" className="hover:text-[#185FA5]">Privacidad</a>
-            <a href="#" className="hover:text-[#185FA5]">Soporte</a>
+            <a href="#" className="hover:text-[#2563EB]">Términos</a>
+            <a href="#" className="hover:text-[#2563EB]">Privacidad</a>
+            <a href="#" className="hover:text-[#2563EB]">Soporte</a>
           </div>
         </footer>
       </div>
 
       {/* ── Right pane (decorative) ── */}
-      <aside className="hidden md:flex flex-col justify-between bg-[#0E1A2B] text-[#E6ECF4] px-14 py-12 relative overflow-hidden">
+      <aside className="hidden md:flex flex-col justify-between bg-[#0F172A] text-[#E6ECF4] px-14 py-12 relative overflow-hidden">
         {/* Grid pattern */}
         <div
           className="absolute inset-0 pointer-events-none"

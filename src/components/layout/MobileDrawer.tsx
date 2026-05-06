@@ -55,7 +55,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-[#0E1A2B]/45 z-[90] transition-opacity ${open ? "block animate-fadeIn" : "hidden"}`}
+        className={`fixed inset-0 bg-[#0F172A]/45 z-[90] transition-opacity ${open ? "block animate-fadeIn" : "hidden"}`}
         onClick={onClose}
       />
 
@@ -65,13 +65,13 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-5 pb-5 border-b border-[#EFF2F6]">
-          <span className="text-[20px] font-bold tracking-tight text-[#0E1A2B]">
-            Cleco<span className="text-[#185FA5]">.</span>
+        <div className="flex items-center justify-between px-5 pb-5 border-b border-[#F1F5F9]">
+          <span className="text-[20px] font-bold tracking-tight text-[#0F172A]">
+            Cleco<span className="text-[#2563EB]">.</span>
           </span>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg text-[#6B7A8F] hover:bg-[#EFF2F6] inline-flex items-center justify-center"
+            className="w-8 h-8 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] inline-flex items-center justify-center"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -89,18 +89,18 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
                 onClick={onClose}
                 className={`flex items-center gap-3 px-3.5 py-3 rounded-lg text-[14.5px] font-medium mb-0.5 transition-colors ${
                   isActive
-                    ? "bg-[#EBF2FA] text-[#185FA5]"
-                    : "text-[#2B3A4F] hover:bg-[#EFF2F6]"
+                    ? "bg-[#EFF6FF] text-[#2563EB]"
+                    : "text-[#1E293B] hover:bg-[#F1F5F9]"
                 }`}
               >
-                <span className={isActive ? "text-[#185FA5]" : "text-[#6B7A8F]"}>{icon}</span>
+                <span className={isActive ? "text-[#2563EB]" : "text-[#6B7280]"}>{icon}</span>
                 {label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="px-5 pt-4 border-t border-[#EFF2F6] text-[11.5px] text-[#6B7A8F]">
+        <div className="px-5 pt-4 border-t border-[#F1F5F9] text-[11.5px] text-[#6B7280]">
           Cleco SpA · v 4.2 · 2026
         </div>
       </aside>
