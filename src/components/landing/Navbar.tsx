@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { label: "Soluciones", href: "#soluciones" },
-  { label: "Nosotros",   href: "#nosotros" },
+  { label: "Nosotros",   href: "/nosotros" },
 ];
 
 export default function Navbar() {

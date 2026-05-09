@@ -13,7 +13,7 @@ const links: { category: string; items: { label: string; href: string }[] }[] = 
   {
     category: "Empresa",
     items: [
-      { label: "Nosotros",  href: "#nosotros" },
+      { label: "Nosotros",  href: "/nosotros" },
       { label: "Contacto",  href: "mailto:hola@cleco.cl" },
     ],
   },
