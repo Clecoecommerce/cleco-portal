@@ -14,7 +14,7 @@ const links: { category: string; items: { label: string; href: string }[] }[] = 
     category: "Empresa",
     items: [
       { label: "Nosotros",  href: "/nosotros" },
-      { label: "Contacto",  href: "mailto:hola@cleco.cl" },
+      { label: "Contacto",  href: "mailto:contacto@cleco.cl" },
     ],
   },
   {
@@ -45,11 +45,11 @@ export default function Footer() {
             {/* Contact */}
             <div className="mt-6 space-y-2.5">
               <a
-                href="mailto:hola@cleco.cl"
+                href="mailto:contacto@cleco.cl"
                 className="flex items-center gap-2 text-sm text-ink/60 hover:text-navy transition-colors"
               >
                 <Mail size={14} className="shrink-0 text-navy/50" />
-                hola@cleco.cl
+                contacto@cleco.cl
               </a>
               <a
                 href="tel:+56220000000"

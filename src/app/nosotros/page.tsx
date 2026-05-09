@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import {
-  Clock, Handshake, DollarSign, Trophy, Heart, BarChart2, Zap, Linkedin,
+  Clock, Handshake, DollarSign, Trophy, Heart, BarChart2, Zap,
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -75,10 +75,7 @@ function FounderCard({
       <span className="inline-block bg-[#EFF6FF] text-[#2563EB] text-[11.5px] font-semibold px-3 py-1 rounded-full mb-4">
         {badge}
       </span>
-      <p className="text-[14px] text-[#1E293B] leading-[1.6] mb-5">{bio}</p>
-      <a href="#" aria-label="LinkedIn" className="text-[#9CA3AF] hover:text-[#2563EB] transition-colors">
-        <Linkedin size={18} />
-      </a>
+      <p className="text-[14px] text-[#1E293B] leading-[1.6]">{bio}</p>
     </div>
   );
 }
@@ -181,7 +178,7 @@ export default function NosotrosPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <FounderCard
-              src="/images/benjamin-herrera.jpg"
+              src="/benjamin-herrera.png"
               name="Benjamín Herrera"
               role="Co-Fundador & Director Comercial"
               badge="Automatización · Growth B2B"
@@ -189,7 +186,7 @@ export default function NosotrosPage() {
               delay={0}
             />
             <FounderCard
-              src="/images/clemente-icaran.jpg"
+              src="/clemente-icaran.png"
               name="Clemente Icarán"
               role="Fundador & Director de Operaciones"
               badge="+6 años en Cobranza · Negociación"

@@ -148,7 +148,7 @@ export function PagosClient({ pagos, recuperadoMes, honorariosTotal, proximoDese
               <div className="flex justify-between"><span className="text-[#6B7280]">Banco</span><span className="font-medium text-[#0F172A]">{banco ?? "No registrado"}</span></div>
               <div className="flex justify-between"><span className="text-[#6B7280]">N° cuenta</span><span className="font-mono text-[#0F172A]">{cuentaCorriente ?? "No registrado"}</span></div>
             </div>
-            <p className="text-[12px] text-[#9CA3AF]">Para actualizar los datos bancarios, contacta a tu ejecutivo en <b>hola@cleco.cl</b>.</p>
+            <p className="text-[12px] text-[#9CA3AF]">Para actualizar los datos bancarios, contacta a tu ejecutivo en <b>contacto@cleco.cl</b>.</p>
           </div>
         </div>
       )}

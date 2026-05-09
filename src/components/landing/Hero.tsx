@@ -147,7 +147,7 @@ export default function Hero() {
         className="relative mt-7 text-xs text-ink/30 tracking-wide landing-fade-in"
         style={{ animationDelay: "320ms" }}
       >
-        "Cobranza que no duele." — CLECO.CL · hola@cleco.cl
+        "Cobranza que no duele." — CLECO.CL · contacto@cleco.cl
       </p>
 
       {/* Stats */}
