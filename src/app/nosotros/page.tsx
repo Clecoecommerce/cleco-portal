@@ -178,21 +178,21 @@ export default function NosotrosPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <FounderCard
-              src="/benjamin-herrera.png"
-              name="Benjamín Herrera"
-              role="Co-Fundador & Director Comercial"
-              badge="Automatización · Growth B2B"
-              bio="Especialista en automatización de procesos comerciales y estrategia de crecimiento B2B. En CLECO lidera la captación de clientes y el desarrollo de tecnología que hace la cobranza más inteligente."
-              delay={0}
-            />
-            <FounderCard
               src="/clemente-icaran.png"
               name="Clemente Icarán"
               role="Fundador & Director de Operaciones"
               badge="+6 años en Cobranza · Negociación"
               bio="Más de 6 años liderando procesos de recuperación de cartera. Conoce cada etapa de la cobranza desde adentro — desde el primer contacto hasta el acuerdo de pago. En CLECO diseña y dirige toda la operación."
-              delay={120}
+              delay={0}
               grayscale
+            />
+            <FounderCard
+              src="/benjamin-herrera.png"
+              name="Benjamín Herrera"
+              role="Co-Fundador & Director Comercial"
+              badge="Automatización · Growth B2B"
+              bio="Especialista en automatización de procesos comerciales y estrategia de crecimiento B2B. En CLECO lidera la captación de clientes y el desarrollo de tecnología que hace la cobranza más inteligente."
+              delay={120}
             />
           </div>
         </div>
