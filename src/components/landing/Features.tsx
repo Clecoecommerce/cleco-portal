@@ -142,7 +142,7 @@ export default function Features() {
             icon={<Banknote size={20} />}
             eyebrow="Modelo sin riesgo"
             title="Solo pagas si recuperamos. Punto."
-            body="Sin mensualidades, sin contratos largos, sin letra chica. Nuestros honorarios son un porcentaje de lo que recuperamos. Si no hay resultado, no hay cobro."
+            body="Sin contratos largos, sin letra chica. Nuestros honorarios son un porcentaje de lo que recuperamos. Si no hay resultado, no hay cobro."
             className="lg:col-span-2"
           />
 
@@ -172,8 +172,8 @@ export default function Features() {
             delay={240}
             icon={<MessageCircle size={20} />}
             eyebrow="Canales modernos"
-            title="WhatsApp, email y llamadas. Lo que funciona."
-            body="Multicanal inteligente: priorizamos WhatsApp porque tiene 98% de tasa de apertura. Sin llamadas agresivas."
+            title="El canal correcto, en el momento correcto."
+            body="Multicanal inteligente: elegimos el medio de contacto según el perfil del deudor. Sin presión, sin llamadas agresivas."
           />
 
           {/* Normal card */}
@@ -204,10 +204,10 @@ export default function Features() {
             </div>
             <div>
               <div className="text-5xl font-bold text-navy tracking-tight leading-none">
-                +$1.200M
+                72%
               </div>
               <div className="mt-2 text-sm text-ink/50 leading-relaxed">
-                en deuda recuperada para empresas chilenas. Y sumando.
+                tasa de recuperación promedio en carteras gestionadas por Cleco.
               </div>
             </div>
           </div>

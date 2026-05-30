@@ -13,14 +13,14 @@ const steps = [
   {
     number: "02",
     icon: <Bot size={22} />,
-    title: "La IA entra en acción",
-    body: "Nuestro motor contacta al deudor en el canal correcto, al momento correcto. WhatsApp, email o llamada — lo que tenga mayor probabilidad de éxito.",
+    title: "Gestionamos con criterio",
+    body: "Nuestro equipo contacta al deudor en el canal adecuado y en el momento correcto. Email, llamada o el medio que mayor probabilidad de éxito tenga según el caso.",
   },
   {
     number: "03",
     icon: <TrendingUp size={22} />,
-    title: "Tú cobras, nosotros cobramos",
-    body: "Cuando recuperamos el dinero, descontamos nuestra comisión. Cero adelantos, cero riesgo. Solo resultados.",
+    title: "Recuperas tu dinero",
+    body: "Cuando recuperamos el monto, descontamos nuestra comisión. Cero adelantos, cero riesgo. Solo resultados.",
   },
 ];
 

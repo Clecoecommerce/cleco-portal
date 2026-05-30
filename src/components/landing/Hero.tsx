@@ -78,7 +78,7 @@ export default function Hero() {
       <div className="relative mb-8 landing-fade-in" style={{ animationDelay: "0ms" }}>
         <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-navy/20 bg-navy/5 text-navy text-xs font-semibold tracking-wide uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-navy animate-pulse" />
-          Cobranza B2B · Santiago, Chile · Sin costo si no recuperamos
+          Cobranza B2B · Santiago, Chile
         </span>
       </div>
 
@@ -87,9 +87,9 @@ export default function Hero() {
         className="relative max-w-4xl text-center text-5xl sm:text-6xl md:text-7xl lg:text-[82px] font-bold tracking-tight text-ink leading-[1.04] landing-fade-in"
         style={{ animationDelay: "80ms" }}
       >
-        Tu plata está ahí.{" "}
+        Recuperamos tus{" "}
         <span className="relative inline-block">
-          <span className="text-navy">Nosotros</span>
+          <span className="text-navy">pagos pendientes.</span>
           <svg
             className="absolute -bottom-2 left-0 w-full"
             viewBox="0 0 200 8"
@@ -107,7 +107,7 @@ export default function Hero() {
           </svg>
         </span>{" "}
         <br className="hidden md:block" />
-        la vamos a buscar.
+        Tú enfócate en crecer.
       </h1>
 
       {/* Subheadline */}
@@ -117,7 +117,7 @@ export default function Hero() {
       >
         Recuperamos tus cuentas por cobrar vencidas con trato respetuoso y canales modernos.{" "}
         <strong className="text-ink/80 font-semibold">
-          Sin mensualidades. Sin riesgo.
+          Sin riesgo.
         </strong>{" "}
         Solo resultados.
       </p>
@@ -156,9 +156,9 @@ export default function Hero() {
         style={{ animationDelay: "400ms" }}
       >
         {[
-          { value: "0%",    label: "Costo si no recuperamos" },
           { value: "+90 d", label: "Carteras con < 15% éxito sin gestión" },
           { value: "71%",   label: "Facturas morosas en PyMEs chilenas" },
+          { value: "< 48h", label: "Para el primer contacto con el deudor" },
         ].map(({ value, label }) => (
           <div key={label} className="text-center">
             <div className="text-2xl sm:text-3xl font-bold text-navy tracking-tight">{value}</div>

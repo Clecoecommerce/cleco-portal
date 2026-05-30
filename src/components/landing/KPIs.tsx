@@ -19,13 +19,13 @@ const kpis: KpiItem[] = [
     suffix: "M",
     end: 1200,
     label: "Recuperado para clientes",
-    description: "En deuda gestionada exitosamente para empresas chilenas desde nuestra fundación.",
+    description: "En deuda gestionada exitosamente para empresas chilenas.",
     duration: 2000,
   },
   {
     suffix: "%",
     end: 72,
-    label: "Tasa de recupero promedio",
+    label: "Tasa de recuperación promedio",
     description: "De las carteras gestionadas terminan con al menos un pago parcial o total.",
     duration: 1600,
   },
@@ -39,9 +39,9 @@ const kpis: KpiItem[] = [
   },
   {
     suffix: "%",
-    end: 0,
-    label: "Costo si no recuperamos",
-    description: "Modelo 100% por comisión. Si no hay resultado, no hay cobro. Sin letra chica.",
+    end: 12,
+    label: "Comisión solo por éxito",
+    description: "Solo pagás si recuperamos. Sin resultado, sin cobro. Sin letra chica.",
     duration: 800,
   },
 ];
