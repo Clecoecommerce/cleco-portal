@@ -48,7 +48,7 @@ export function TopNav({ profile }: { profile: Profile }) {
 
           <Link href="/" className="hover:opacity-80 transition-opacity">
             <div className="relative h-9 w-[108px] overflow-hidden">
-              <Image src="/logo.png" alt="cleCo" fill className="object-contain" style={{ transform: "scale(3.5)", transformOrigin: "50% 52%", mixBlendMode: "multiply" }} priority />
+              <Image src="/logo.png" alt="cleCo" fill className="object-contain" style={{ transform: "scale(3.5)", transformOrigin: "50% 52%" }} priority />
             </div>
           </Link>
 
