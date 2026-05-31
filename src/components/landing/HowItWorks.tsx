@@ -7,20 +7,20 @@ const steps = [
   {
     number: "01",
     icon: <Upload size={22} />,
-    title: "Sube tu cartera",
-    body: "Comparte la lista de tus facturas vencidas. Nuestro equipo hace la validación inicial en menos de 24 horas hábiles.",
+    title: "Nos entregas tu cartera",
+    body: "Compartes la lista de tus facturas vencidas con datos de contacto. Hacemos la validación inicial en menos de 24 horas hábiles y activamos la gestión.",
   },
   {
     number: "02",
     icon: <Bot size={22} />,
-    title: "Gestionamos con criterio",
-    body: "Nuestro equipo contacta al deudor en el canal adecuado y en el momento correcto. Email, llamada o el medio que mayor probabilidad de éxito tenga según el caso.",
+    title: "CLECO gestiona por ti",
+    body: "Contactamos al deudor en el canal correcto y en el momento adecuado — email, teléfono o el medio con mayor probabilidad de éxito según el perfil del caso.",
   },
   {
     number: "03",
     icon: <TrendingUp size={22} />,
-    title: "Recuperas tu dinero",
-    body: "Cuando recuperamos el monto, descontamos nuestra comisión. Cero adelantos, cero riesgo. Solo resultados.",
+    title: "Recibes tu dinero. Nosotros, nuestra comisión.",
+    body: "Cuando recuperamos, descontamos nuestra comisión (entre 10% y 25% según el caso). Si no hay resultado, no hay cobro. Cero riesgo para ti.",
   },
 ];
 

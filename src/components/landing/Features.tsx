@@ -7,6 +7,9 @@ import {
   MessageCircle,
   ShieldCheck,
   Zap,
+  User,
+  BarChart3,
+  Handshake,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -212,6 +215,65 @@ export default function Features() {
             </div>
           </div>
         </div>
+
+        {/* ── 3 perfiles de cliente ─────────────────────── */}
+        <div
+          className={clsx(
+            "mt-16 transition-all duration-700",
+            inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          )}
+          style={{ transitionDelay: "500ms" }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-navy/60 mb-2 text-center">
+            ¿Para quién es CLECO?
+          </p>
+          <h3 className="text-2xl sm:text-3xl font-bold text-ink text-center mb-10 tracking-tight">
+            Tres problemas distintos. Una misma solución.
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <User size={20} />,
+                perfil: "Dueño de PyME",
+                dolor: "Pierdes horas persiguiendo clientes que no pagan. Te incomoda cobrar, temes dañar la relación y terminas resignándote a perder ese dinero.",
+                solución: "Nosotros ponemos los recursos. Tú pones la cartera. Si no recuperamos, no cobramos nada.",
+              },
+              {
+                icon: <BarChart3 size={20} />,
+                perfil: "CFO / Gerente Financiero",
+                dolor: "DSO elevado, flujo de caja comprometido y cartera vencida que crece. Necesitas resultados sin aumentar tu equipo.",
+                solución: "Gestión activa desde el día 1. Dashboard en tiempo real. Recuperación medible en semanas.",
+              },
+              {
+                icon: <Handshake size={20} />,
+                perfil: "Gerente Comercial",
+                dolor: "Tienes un cliente moroso que también es tu mejor cliente. No puedes ser agresivo porque lo pierdes. No puedes ignorarlo porque afecta tu flujo.",
+                solución: "Cobramos nosotros para que tú no te manches. La relación con tu cliente, intacta.",
+              },
+            ].map(({ icon, perfil, dolor, solución }, i) => (
+              <div
+                key={perfil}
+                className={clsx(
+                  "rounded-2xl border border-gray-100 bg-white p-7 flex flex-col gap-4 transition-all duration-700",
+                  inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                )}
+                style={{ transitionDelay: `${520 + i * 80}ms` }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-navy/8 flex items-center justify-center text-navy flex-shrink-0">
+                  {icon}
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-navy/60 mb-1">{perfil}</p>
+                  <p className="text-sm text-ink/60 leading-relaxed mb-3">{dolor}</p>
+                  <div className="border-t border-gray-100 pt-3">
+                    <p className="text-sm font-semibold text-ink leading-relaxed">{solución}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </section>
   );

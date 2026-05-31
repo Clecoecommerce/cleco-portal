@@ -15,7 +15,7 @@ const floatingCards = [
   {
     id: 2,
     icon: <TrendingUp size={14} className="text-navy" />,
-    label: "Tasa de recupero",
+    label: "Tasa de recuperación",
     value: "72%",
     sub: "Promedio últimos 90 días",
     pos: "bottom-[28%] left-[-2%] sm:left-[2%]",
@@ -115,11 +115,9 @@ export default function Hero() {
         className="relative mt-9 max-w-2xl text-center text-lg sm:text-xl text-ink/55 leading-relaxed landing-fade-in"
         style={{ animationDelay: "160ms" }}
       >
-        Recuperamos tus cuentas por cobrar vencidas con trato respetuoso y canales modernos.{" "}
-        <strong className="text-ink/80 font-semibold">
-          Sin riesgo.
-        </strong>{" "}
-        Solo resultados.
+        Si no recuperamos, no te cobramos nada.{" "}
+        <strong className="text-ink/80 font-semibold">Cero riesgo financiero.</strong>{" "}
+        Tu cartera comienza a moverse en menos de 48 horas.
       </p>
 
       {/* CTAs */}
