@@ -39,9 +39,9 @@ const kpis: KpiItem[] = [
   },
   {
     suffix: "%",
-    end: 12,
-    label: "Comisión solo por éxito",
-    description: "Solo pagás si recuperamos. Sin resultado, sin cobro. Sin letra chica.",
+    end: 80,
+    label: "PyMEs con facturas impagas",
+    description: "De las empresas chilenas enfrenta retrasos de pago de sus clientes. Es un problema estructural, no puntual.",
     duration: 800,
   },
 ];

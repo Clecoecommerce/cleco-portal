@@ -20,7 +20,7 @@ const steps = [
     number: "03",
     icon: <TrendingUp size={22} />,
     title: "Recibes tu dinero. Nosotros, nuestra comisión.",
-    body: "Cuando recuperamos, descontamos nuestra comisión (entre 10% y 25% según el caso). Si no hay resultado, no hay cobro. Cero riesgo para ti.",
+    body: "El monto recuperado llega a tu cuenta. Nuestros honorarios se descuentan directamente del monto gestionado. Proceso simple, liquidación transparente.",
   },
 ];
 

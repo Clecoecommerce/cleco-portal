@@ -115,9 +115,8 @@ export default function Hero() {
         className="relative mt-9 max-w-2xl text-center text-lg sm:text-xl text-ink/55 leading-relaxed landing-fade-in"
         style={{ animationDelay: "160ms" }}
       >
-        Si no recuperamos, no te cobramos nada.{" "}
-        <strong className="text-ink/80 font-semibold">Cero riesgo financiero.</strong>{" "}
-        Tu cartera comienza a moverse en menos de 48 horas.
+        Gestión profesional de cobranza B2B con tecnología e inteligencia humana.{" "}
+        <strong className="text-ink/80 font-semibold">Tu cartera activa en menos de 48 horas.</strong>
       </p>
 
       {/* CTAs */}

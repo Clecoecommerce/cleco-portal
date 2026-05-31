@@ -144,8 +144,8 @@ export default function Features() {
             accent
             icon={<Banknote size={20} />}
             eyebrow="Modelo sin riesgo"
-            title="Solo pagas si recuperamos. Punto."
-            body="Sin contratos largos, sin letra chica. Nuestros honorarios son un porcentaje de lo que recuperamos. Si no hay resultado, no hay cobro."
+            title="Honorarios alineados a tu recuperación."
+            body="Sin contratos largos, sin letra chica. Nuestros honorarios son un porcentaje del monto que recuperamos. Simple, transparente y medible."
             className="lg:col-span-2"
           />
 
@@ -236,7 +236,7 @@ export default function Features() {
                 icon: <User size={20} />,
                 perfil: "Dueño de PyME",
                 dolor: "Pierdes horas persiguiendo clientes que no pagan. Te incomoda cobrar, temes dañar la relación y terminas resignándote a perder ese dinero.",
-                solución: "Nosotros ponemos los recursos. Tú pones la cartera. Si no recuperamos, no cobramos nada.",
+                solución: "Nos hacemos cargo de cobrar para que tú te enfoques en lo que importa. Gestión activa desde el día 1.",
               },
               {
                 icon: <BarChart3 size={20} />,

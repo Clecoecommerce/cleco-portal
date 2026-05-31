@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: Props) {
         {/* Logo */}
         <Link href="/" className="hover:opacity-80 transition-opacity inline-block">
           <div className="relative h-9 w-[108px] overflow-hidden">
-            <Image src="/logo.png" alt="cleCo" fill className="object-contain" style={{ transform: "scale(3.5)", transformOrigin: "50% 52%" }} priority />
+            <Image src="/logo.png" alt="cleCo" fill className="object-contain" style={{ transform: "scale(3.5)", transformOrigin: "50% 52%", mixBlendMode: "multiply" }} priority />
           </div>
         </Link>
 

@@ -225,7 +225,7 @@ export default function NosotrosPage() {
             <PainCard
               icon={<DollarSign size={20} />}
               title="Pagas aunque no recuperes nada"
-              text="Las agencias tradicionales cobran mensualidad igual. Nosotros solo cobramos cuando tú cobras. Cero riesgo financiero."
+              text="Las agencias tradicionales cobran independiente del resultado. En CLECO nuestros honorarios están directamente ligados al monto que recuperamos. Alineación total de intereses."
               delay={200}
             />
           </div>
@@ -250,7 +250,7 @@ export default function NosotrosPage() {
             sin que pierdas tiempo ni dañes tus relaciones comerciales.
           </p>
           <p className="text-[16px] text-white/45 mb-10 italic">
-            Y solo te cobramos si recuperamos.
+            Honorarios alineados al resultado. Sin letra chica.
           </p>
           <Link
             href="/#contacto"
@@ -276,7 +276,7 @@ export default function NosotrosPage() {
             <ValueCard
               icon={<Trophy size={18} />}
               title="Resultados antes que honorarios"
-              text="Si no recuperamos, no cobramos. Nuestros incentivos están 100% alineados con los tuyos."
+              text="Nuestros honorarios son un porcentaje del monto recuperado. Nuestros incentivos están 100% alineados con los tuyos."
               delay={0}
             />
             <ValueCard
