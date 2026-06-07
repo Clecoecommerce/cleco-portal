@@ -76,7 +76,7 @@ function EditModal({ factura, onClose, onSaved }: { factura: FacturaWithDeudor; 
     const { error } = await sb.from("facturas").update({ monto: montoNum, numero: numero.trim(), fecha_vencimiento: fecha, notas: notas.trim() || null }).eq("id", factura.id);
     setLoading(false);
     if (error) { setErr("Error al guardar: " + error.message); return; }
-    onSaved({ monto: montoNum, numero: numero.trim(), fecha_vencimiento: fecha, notas: notas.trim() || null });
+    onSaved({ id: factura.id, monto: montoNum, numero: numero.trim(), fecha_vencimiento: fecha, notas: notas.trim() || null });
   }
 
   const iCls = "w-full h-10 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all";
@@ -254,7 +254,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
 
   return (
     <>
-      {modal && <UploadModal open={modal} onClose={() => setModal(false)} profileId={profileId} onCreated={refetchFacturas} />}
+      {modal && <UploadModal open={modal} onClose={() => { setModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {editFactura && <EditModal factura={editFactura} onClose={() => setEditFactura(null)} onSaved={(updated) => { setFacturas(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f)); setEditFactura(null); }} />}
       {detail && <DetailPanel f={detail} onClose={() => setDetail(null)} />}
 
