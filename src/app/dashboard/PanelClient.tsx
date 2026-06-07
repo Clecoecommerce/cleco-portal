@@ -14,7 +14,154 @@ const TABS    = ["facturas", "historial", "reportes"] as const;
 type Tab      = (typeof TABS)[number];
 type Estado   = "todos" | "en_gestion" | "pendiente" | "pagada" | "vencida";
 type Periodo  = "todos" | "30" | "60" | "90";
+type SortField = "vencimiento" | "monto" | null;
+type SortDir   = "asc" | "desc";
 const PER_PAGE = 10;
+
+/* ── Sort icon ── */
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className={active ? "text-[#2563EB]" : "text-[#CBD5E1]"}>
+      <path d="M5 1L8 4H2L5 1Z" fill={active && dir === "asc" ? "currentColor" : "#CBD5E1"} />
+      <path d="M5 9L2 6H8L5 9Z" fill={active && dir === "desc" ? "currentColor" : "#CBD5E1"} />
+    </svg>
+  );
+}
+
+/* ── Resumen de cartera (tab Reportes) ── */
+function ResumenCartera({ facturas }: { facturas: FacturaWithDeudor[] }) {
+  const hoy = new Date();
+
+  const grupos = {
+    vencida:    facturas.filter(f => f.estado !== "pagada" && new Date(f.fecha_vencimiento) < hoy),
+    en_gestion: facturas.filter(f => f.estado === "en_gestion" && new Date(f.fecha_vencimiento) >= hoy),
+    pendiente:  facturas.filter(f => f.estado === "pendiente"),
+    pagada:     facturas.filter(f => f.estado === "pagada"),
+  };
+
+  const sum = (arr: FacturaWithDeudor[]) => arr.reduce((a, f) => a + f.monto, 0);
+  const montos = { vencida: sum(grupos.vencida), en_gestion: sum(grupos.en_gestion), pendiente: sum(grupos.pendiente), pagada: sum(grupos.pagada) };
+  const total = Object.values(montos).reduce((a, v) => a + v, 0);
+  const pct = (v: number) => total > 0 ? Math.round((v / total) * 100) : 0;
+
+  const proxVencer = facturas.filter(f => {
+    if (f.estado === "pagada") return false;
+    const d = new Date(f.fecha_vencimiento);
+    const diff = (d.getTime() - hoy.getTime()) / 86_400_000;
+    return diff >= 0 && diff <= 7;
+  });
+
+  const stats = [
+    { label: "Vencidas",    monto: montos.vencida,    count: grupos.vencida.length,    color: "#B23B3B", bg: "#FBE9E9",  badge: "red"   },
+    { label: "En gestión",  monto: montos.en_gestion, count: grupos.en_gestion.length, color: "#1A5FA5", bg: "#E6EFF8",  badge: "blue"  },
+    { label: "Pendientes",  monto: montos.pendiente,  count: grupos.pendiente.length,  color: "#B7791F", bg: "#FBF3E1",  badge: "amber" },
+    { label: "Recuperado",  monto: montos.pagada,     count: grupos.pagada.length,     color: "#1F7A4D", bg: "#E5F4EC",  badge: "green" },
+  ] as const;
+
+  const barSegments = [
+    { pct: pct(montos.vencida),    color: "#B23B3B" },
+    { pct: pct(montos.en_gestion), color: "#2563EB" },
+    { pct: pct(montos.pendiente),  color: "#F59E0B" },
+    { pct: pct(montos.pagada),     color: "#1F7A4D" },
+  ];
+
+  return (
+    <div className="p-6 space-y-6">
+
+      {/* Alerta próximos a vencer */}
+      {proxVencer.length > 0 && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-[10px] bg-[#FBF3E1] border border-[#B7791F]/20">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B7791F" strokeWidth="2" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <p className="text-[13px] font-semibold text-[#B7791F]">{proxVencer.length} factura{proxVencer.length > 1 ? "s" : ""} vence{proxVencer.length === 1 ? "" : "n"} en los próximos 7 días</p>
+            <p className="text-[12px] text-[#B7791F]/80 mt-0.5">Monto total: {formatCLP(sum(proxVencer))}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Stats 4 columnas */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {stats.map(s => (
+          <div key={s.label} className="border border-[#E2E8F0] rounded-[12px] p-4" style={{ background: s.bg + "66" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: s.color }}>{s.label}</p>
+            <p className="text-[20px] font-bold text-[#0F172A] leading-none">{s.count}</p>
+            <p className="text-[12px] text-[#6B7280] mt-1">{formatCLP(s.monto)}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de distribución */}
+      {total > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[12.5px] font-semibold text-[#0F172A]">Distribución del monto en cartera</p>
+            <p className="text-[12px] text-[#6B7280]">Total: {formatCLP(total)}</p>
+          </div>
+          <div className="flex h-4 rounded-full overflow-hidden gap-px">
+            {barSegments.filter(s => s.pct > 0).map((s, i) => (
+              <div key={i} style={{ width: `${s.pct}%`, background: s.color }} title={`${s.pct}%`} />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
+            {[
+              { label: "Vencidas",   pct: pct(montos.vencida),    color: "#B23B3B" },
+              { label: "En gestión", pct: pct(montos.en_gestion), color: "#2563EB" },
+              { label: "Pendientes", pct: pct(montos.pendiente),  color: "#F59E0B" },
+              { label: "Recuperado", pct: pct(montos.pagada),     color: "#1F7A4D" },
+            ].filter(l => l.pct > 0).map(l => (
+              <span key={l.label} className="flex items-center gap-1.5 text-[12px] text-[#6B7280]">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: l.color }} />
+                {l.label} · {l.pct}%
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Facturas por mes — últimos 3 meses como barras simples */}
+      <div>
+        <p className="text-[12.5px] font-semibold text-[#0F172A] mb-3">Facturas ingresadas (últimos 4 meses)</p>
+        {(() => {
+          const meses: Record<string, { count: number; monto: number }> = {};
+          for (let i = 3; i >= 0; i--) {
+            const d = new Date(); d.setMonth(d.getMonth() - i);
+            const k = d.toLocaleDateString("es-CL", { month: "short", year: "numeric" });
+            meses[k] = { count: 0, monto: 0 };
+          }
+          facturas.forEach(f => {
+            const d = new Date(f.created_at);
+            const k = d.toLocaleDateString("es-CL", { month: "short", year: "numeric" });
+            if (meses[k]) { meses[k].count++; meses[k].monto += f.monto; }
+          });
+          const maxMonto = Math.max(...Object.values(meses).map(m => m.monto), 1);
+          return (
+            <div className="flex items-end gap-3 h-24">
+              {Object.entries(meses).map(([label, { count, monto }]) => (
+                <div key={label} className="flex-1 flex flex-col items-center gap-1.5">
+                  <span className="text-[11px] text-[#6B7280]">{count > 0 ? formatCLP(monto).replace("$ ","$") : ""}</span>
+                  <div className="w-full rounded-t-[4px] bg-[#2563EB]/20 hover:bg-[#2563EB]/40 transition-colors relative min-h-[4px]"
+                    style={{ height: `${Math.max(4, Math.round((monto / maxMonto) * 72))}px` }}>
+                    {count > 0 && <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-[#2563EB] font-semibold">{count}</span>}
+                  </div>
+                  <span className="text-[10.5px] text-[#9CA3AF] text-center leading-tight">{label}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+    </div>
+  );
+}
+
+function moraDias(f: FacturaWithDeudor): number {
+  if (f.estado === "pagada") return 0;
+  const venc = new Date(f.fecha_vencimiento);
+  const hoy  = new Date();
+  if (venc >= hoy) return 0;
+  return Math.floor((hoy.getTime() - venc.getTime()) / 86_400_000);
+}
 
 /* ── Detail side panel ── */
 function DetailPanel({ f, onClose }: { f: FacturaWithDeudor; onClose: () => void }) {
@@ -200,6 +347,14 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
   const [detail,       setDetail]       = useState<FacturaWithDeudor | null>(null);
   const [editFactura,  setEditFactura]  = useState<FacturaWithDeudor | null>(null);
   const [bulkModal,    setBulkModal]    = useState(false);
+  const [sortField,    setSortField]    = useState<SortField>(null);
+  const [sortDir,      setSortDir]      = useState<SortDir>("asc");
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDir("asc"); }
+    setPage(1);
+  }
 
   async function refetchFacturas() {
     const sb = createClient();
@@ -228,8 +383,16 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
     return matchSearch && matchEstado && matchPeriodo;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortField) return 0;
+    const mul = sortDir === "asc" ? 1 : -1;
+    if (sortField === "vencimiento") return mul * (new Date(a.fecha_vencimiento).getTime() - new Date(b.fecha_vencimiento).getTime());
+    if (sortField === "monto")       return mul * (a.monto - b.monto);
+    return 0;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+  const paged = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   function handleSearch(v: string) { setSearch(v); setPage(1); }
   function handleEstado(v: Estado) { setEstado(v); setPage(1); }
@@ -328,21 +491,47 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
               <table className="invoice-table w-full border-collapse text-[13.5px]">
                 <thead>
                   <tr className="bg-[#FAFBFD]">
-                    {["Deudor", "RUT", "N° Factura", "Vencimiento", "Monto", "Estado", ""].map(h => (
-                      <th key={h} className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]" style={h === "Monto" ? { textAlign: "right" } : {}}>{h}</th>
-                    ))}
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">Deudor</th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">RUT</th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">N° Factura</th>
+                    {/* Vencimiento — sortable */}
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0] cursor-pointer select-none hover:text-[#0F172A]"
+                      onClick={() => toggleSort("vencimiento")}>
+                      <span className="inline-flex items-center gap-1">
+                        Vencimiento
+                        <SortIcon active={sortField === "vencimiento"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">Mora</th>
+                    {/* Monto — sortable */}
+                    <th className="text-right text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0] cursor-pointer select-none hover:text-[#0F172A]"
+                      onClick={() => toggleSort("monto")}>
+                      <span className="inline-flex items-center gap-1 float-right">
+                        Monto
+                        <SortIcon active={sortField === "monto"} dir={sortDir} />
+                      </span>
+                    </th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">Estado</th>
+                    <th className="border-b border-[#E2E8F0]" />
                   </tr>
                 </thead>
                 <tbody>
                   {paged.map(f => {
                     const estadoDisplay = calcularEstado(f.estado, f.fecha_vencimiento);
                     const { variant, label } = estadoToBadge(estadoDisplay);
+                    const mora = moraDias(f);
                     return (
                       <tr key={f.id} className="border-b border-[#F1F5F9] last:border-0 hover:bg-[#FAFBFD] transition-colors">
                         <td className="td-debtor px-4 py-3.5 font-medium text-[#0F172A]" data-label="Deudor">{f.deudores?.razon_social ?? "—"}</td>
                         <td className="px-4 py-3.5 font-mono text-[12.5px] text-[#1E293B]" data-label="RUT">{f.deudores?.rut ?? "—"}</td>
                         <td className="px-4 py-3.5 font-mono text-[12.5px] text-[#1E293B]" data-label="N° Factura">N° {f.numero}</td>
                         <td className="px-4 py-3.5 text-[#6B7280] tabular-nums" data-label="Vencimiento">{new Date(f.fecha_vencimiento).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                        <td className="px-4 py-3.5 tabular-nums" data-label="Mora">
+                          {mora > 0
+                            ? <span className={`text-[12.5px] font-medium ${mora >= 90 ? "text-[#B23B3B]" : mora >= 30 ? "text-[#B7791F]" : "text-[#6B7280]"}`}>{mora}d</span>
+                            : <span className="text-[#9CA3AF] text-[12.5px]">—</span>
+                          }
+                        </td>
                         <td className="px-4 py-3.5 text-right font-medium text-[#0F172A] tabular-nums" data-label="Monto">{formatCLP(f.monto)}</td>
                         <td className="px-4 py-3.5" data-label="Estado"><Badge variant={variant}>{label}</Badge></td>
                         <td className="px-4 py-3.5">
@@ -362,7 +551,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
 
             {/* Pagination */}
             <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t border-[#E2E8F0] text-[12.5px] text-[#6B7280] gap-3">
-              <span>Mostrando {Math.min(filtered.length, (page - 1) * PER_PAGE + paged.length)} de {filtered.length} facturas</span>
+              <span>Mostrando {Math.min(sorted.length, (page - 1) * PER_PAGE + paged.length)} de {sorted.length} facturas</span>
               <div className="flex gap-1">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="w-7 h-7 rounded-[6px] border text-[12px] bg-white text-[#1E293B] border-[#E2E8F0] hover:bg-[#F1F5F9] disabled:opacity-40">‹</button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
@@ -373,13 +562,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
             </div>
           </>
         ) : (
-          <div className="py-16 text-center text-[#6B7280]">
-            <div className="w-11 h-11 rounded-[12px] bg-[#F1F5F9] inline-flex items-center justify-center mb-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 7"/></svg>
-            </div>
-            <h3 className="text-[15px] font-semibold text-[#0F172A] mb-1">Reportes mensuales</h3>
-            <p className="text-[13px] max-w-xs mx-auto">Descarga el CSV desde el botón <b>Exportar</b> en la pestaña Mis facturas o Historial.</p>
-          </div>
+          <ResumenCartera facturas={facturas} />
         )}
       </div>
     </>
