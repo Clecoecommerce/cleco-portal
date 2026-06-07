@@ -35,6 +35,7 @@ export function estadoToBadge(estado: string): { variant: BadgeVariant; label: s
     case "en_gestion":  return { variant: "blue",  label: "En gestión" };
     case "pendiente":   return { variant: "amber", label: "Pendiente" };
     case "pagada":      return { variant: "green", label: "Pagada" };
+    case "vencida":     return { variant: "red",   label: "Vencida" };
     case "liquidado":   return { variant: "green", label: "Liquidado" };
     case "en_proceso":  return { variant: "blue",  label: "En proceso" };
     case "bajo":        return { variant: "blue",  label: "Bajo" };

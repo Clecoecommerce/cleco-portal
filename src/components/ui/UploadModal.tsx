@@ -2,19 +2,11 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatRUT, validarRUT } from "@/lib/utils";
 import { Button } from "./Button";
 
-interface Props { open: boolean; onClose: () => void; profileId: string; }
+interface Props { open: boolean; onClose: () => void; profileId: string; onCreated?: () => void; }
 type Stage = "form" | "loading" | "success";
-
-function formatRut(val: string): string {
-  const clean = val.replace(/[^0-9kK]/g, "").toUpperCase();
-  if (clean.length < 2) return clean;
-  const body = clean.slice(0, -1);
-  const dv   = clean.slice(-1);
-  const dots  = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${dots}-${dv}`;
-}
 
 function formatPhone(val: string): string {
   const digits = val.replace(/\D/g, "");
@@ -40,7 +32,7 @@ function Field({ label, req, children }: { label: string; req?: boolean; childre
   );
 }
 
-export function UploadModal({ open, onClose, profileId }: Props) {
+export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
   const [stage,    setStage]    = useState<Stage>("form");
   const [drag,     setDrag]     = useState(false);
   const [file,     setFile]     = useState<File | null>(null);
@@ -49,8 +41,10 @@ export function UploadModal({ open, onClose, profileId }: Props) {
   const [repactar, setRepactar] = useState(false);
   const [montoRaw, setMontoRaw] = useState("");
   const [cuotas,   setCuotas]   = useState(2);
-  const [rutVal,   setRutVal]   = useState("");
-  const [telVal,   setTelVal]   = useState("");
+  const [rutVal,    setRutVal]    = useState("");
+  const [rutError,  setRutError]  = useState("");
+  const [montoError, setMontoError] = useState("");
+  const [telVal,    setTelVal]    = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monto    = parseInt(montoRaw || "0", 10);
@@ -59,7 +53,7 @@ export function UploadModal({ open, onClose, profileId }: Props) {
   function reset() {
     setStage("form"); setFile(null); setErr("");
     setRepactar(false); setMontoRaw(""); setCuotas(2);
-    setRutVal(""); setTelVal("");
+    setRutVal(""); setRutError(""); setMontoError(""); setTelVal("");
   }
   function close() { if (stage !== "loading") { reset(); onClose(); } }
 
@@ -88,8 +82,12 @@ export function UploadModal({ open, onClose, profileId }: Props) {
     const fecha_venc    = g("fecha_vencimiento");
     const notas         = (fd.elements.namedItem("notas") as HTMLTextAreaElement).value.trim();
 
+    if (!validarRUT(rut))    { setErr("RUT inválido. Verifica el dígito verificador."); setStage("form"); return; }
+    if (!razon_social)       { setErr("La razón social es obligatoria.");   setStage("form"); return; }
     if (!email_c || !tel_c) { setErr("Email y teléfono son obligatorios."); setStage("form"); return; }
-    if (monto <= 0)          { setErr("Ingresa un monto válido.");          setStage("form"); return; }
+    if (!g("numero"))        { setErr("El número de factura es obligatorio."); setStage("form"); return; }
+    if (!g("fecha_vencimiento")) { setErr("La fecha de vencimiento es obligatoria."); setStage("form"); return; }
+    if (monto <= 0)          { setMontoError("El monto debe ser mayor a $0"); setStage("form"); return; }
 
     const sb = createClient();
     let archivo_url: string | null = null;
@@ -118,6 +116,7 @@ export function UploadModal({ open, onClose, profileId }: Props) {
     if (fErr) { setErr("Error al guardar factura: " + fErr.message); setStage("form"); return; }
     setFolio(`CL-2026-${numero.padStart(5, "0").slice(-5)}`);
     setStage("success");
+    onCreated?.();
   }
 
   if (!open) return null;
@@ -150,11 +149,14 @@ export function UploadModal({ open, onClose, profileId }: Props) {
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3">1 · Datos del deudor</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <Field label="RUT del deudor" req>
-                    <input name="rut" required placeholder="77.123.456-7" className={iCls}
+                    <input name="rut" required placeholder="77.123.456-7"
+                      className={`${iCls} ${rutError ? "border-[#B23B3B] focus:border-[#B23B3B] focus:ring-[#B23B3B]/12" : ""}`}
                       value={rutVal}
-                      onChange={e => setRutVal(formatRut(e.target.value))}
+                      onChange={e => { setRutVal(formatRUT(e.target.value)); setRutError(""); }}
+                      onBlur={() => { if (rutVal && !validarRUT(rutVal)) setRutError("RUT inválido"); }}
                       maxLength={12}
                     />
+                    {rutError && <p className="mt-1 text-[12px] text-[#B23B3B]">{rutError}</p>}
                   </Field>
                   <Field label="Razón social" req><input name="razon_social" required placeholder="Empresa S.A." className={iCls} /></Field>
                 </div>
@@ -191,10 +193,12 @@ export function UploadModal({ open, onClose, profileId }: Props) {
                         <input
                           name="monto" required placeholder="1.250.000"
                           value={fmtMonto(montoRaw)}
-                          onChange={(e) => setMontoRaw(e.target.value.replace(/\D/g, ""))}
-                          className={`${iCls} pl-7`}
+                          onChange={(e) => { setMontoRaw(e.target.value.replace(/\D/g, "")); setMontoError(""); }}
+                          onBlur={() => { if (montoRaw && parseInt(montoRaw) <= 0) setMontoError("El monto debe ser mayor a $0"); }}
+                          className={`${iCls} pl-7 ${montoError ? "border-[#B23B3B] focus:border-[#B23B3B] focus:ring-[#B23B3B]/12" : ""}`}
                         />
                       </div>
+                      {montoError && <p className="mt-1 text-[12px] text-[#B23B3B]">{montoError}</p>}
                     </Field>
                   </div>
                 </div>
