@@ -10,10 +10,11 @@ import { getInitials } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
 const navItems = [
-  { href: "/dashboard",           label: "Panel" },
-  { href: "/dashboard/deudores",  label: "Deudores" },
-  { href: "/dashboard/pagos",     label: "Pagos" },
-  { href: "/dashboard/ayuda",     label: "Ayuda" },
+  { href: "/dashboard",            label: "Panel" },
+  { href: "/dashboard/deudores",   label: "Deudores" },
+  { href: "/dashboard/pagos",      label: "Pagos" },
+  { href: "/dashboard/panorama",   label: "Panorama" },
+  { href: "/dashboard/ayuda",      label: "Ayuda" },
 ];
 
 export function TopNav({ profile }: { profile: Profile }) {

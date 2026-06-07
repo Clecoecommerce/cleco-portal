@@ -14,7 +14,7 @@ const TABS    = ["facturas", "historial", "reportes"] as const;
 type Tab      = (typeof TABS)[number];
 type Estado   = "todos" | "en_gestion" | "pendiente" | "pagada" | "vencida";
 type Periodo  = "todos" | "30" | "60" | "90";
-type SortField = "vencimiento" | "monto" | null;
+type SortField = "vencimiento" | "monto" | "mora" | null;
 type SortDir   = "asc" | "desc";
 const PER_PAGE = 10;
 
@@ -388,6 +388,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
     const mul = sortDir === "asc" ? 1 : -1;
     if (sortField === "vencimiento") return mul * (new Date(a.fecha_vencimiento).getTime() - new Date(b.fecha_vencimiento).getTime());
     if (sortField === "monto")       return mul * (a.monto - b.monto);
+    if (sortField === "mora")        return mul * (moraDias(a) - moraDias(b));
     return 0;
   });
 
@@ -502,7 +503,10 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
                         <SortIcon active={sortField === "vencimiento"} dir={sortDir} />
                       </span>
                     </th>
-                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">Mora</th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0] cursor-pointer select-none hover:text-[#0F172A]"
+                      onClick={() => toggleSort("mora")}>
+                      <span className="inline-flex items-center gap-1">Mora <SortIcon active={sortField === "mora"} dir={sortDir} /></span>
+                    </th>
                     {/* Monto — sortable */}
                     <th className="text-right text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0] cursor-pointer select-none hover:text-[#0F172A]"
                       onClick={() => toggleSort("monto")}>

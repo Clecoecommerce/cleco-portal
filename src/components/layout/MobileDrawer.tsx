@@ -38,6 +38,15 @@ const navItems = [
     ),
   },
   {
+    href: "/dashboard/panorama",
+    label: "Panorama",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 7"/>
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/ayuda",
     label: "Ayuda",
     icon: (
