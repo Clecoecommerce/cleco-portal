@@ -18,6 +18,49 @@ type SortField = "vencimiento" | "monto" | "mora" | null;
 type SortDir   = "asc" | "desc";
 const PER_PAGE = 10;
 
+/* ── Estado column filter ── */
+const ESTADO_OPTS: { value: Estado; label: string; color: string }[] = [
+  { value: "todos",      label: "Todos",       color: "#6B7280" },
+  { value: "en_gestion", label: "En gestión",  color: "#1A5FA5" },
+  { value: "pendiente",  label: "Pendiente",   color: "#B7791F" },
+  { value: "vencida",    label: "Vencida",     color: "#B23B3B" },
+  { value: "pagada",     label: "Pagada",      color: "#1F7A4D" },
+];
+
+function EstadoColumnFilter({ value, onChange }: { value: Estado; onChange: (v: Estado) => void }) {
+  const [open, setOpen] = useState(false);
+  const selected = ESTADO_OPTS.find(o => o.value === value) ?? ESTADO_OPTS[0];
+  return (
+    <div className="relative inline-block">
+      <button onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 group hover:text-[#0F172A] transition-colors">
+        <span>Estado</span>
+        {value !== "todos" && (
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: selected.color }} />
+        )}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          className={`transition-transform ${open ? "rotate-180" : ""}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-6 z-20 w-36 bg-white border border-[#E2E8F0] rounded-[10px] shadow-lg p-1 text-[12.5px]">
+            {ESTADO_OPTS.map(o => (
+              <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`flex items-center gap-2 w-full px-3 py-2 rounded-[6px] text-left transition-colors ${value === o.value ? "bg-[#F1F5F9] font-semibold" : "hover:bg-[#F8FAFC]"}`}>
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: o.color }} />
+                <span style={{ color: o.color }}>{o.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── Sort icon ── */
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   return (
@@ -290,6 +333,99 @@ function Row({ label, value, bold, mono }: { label: string; value: string; bold?
   );
 }
 
+/* ── Modal confirmar pago ── */
+function ConfirmarPagoModal({ factura, profileId, onClose, onConfirmed }: {
+  factura: FacturaWithDeudor; profileId: string;
+  onClose: () => void; onConfirmed: () => void;
+}) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const [fecha,   setFecha]   = useState(hoy);
+  const [monto,   setMonto]   = useState(factura.monto.toLocaleString("es-CL"));
+  const [metodo,  setMetodo]  = useState("Transferencia");
+  const [loading, setLoading] = useState(false);
+  const [err,     setErr]     = useState("");
+
+  async function confirmar() {
+    const montoNum = parseInt(monto.replace(/\D/g, "") || "0", 10);
+    if (montoNum <= 0) { setErr("Ingresa un monto válido."); return; }
+    if (!fecha)        { setErr("La fecha es obligatoria."); return; }
+    setLoading(true);
+    const sb = createClient();
+
+    const { error: pErr } = await sb.from("pagos").insert({
+      factura_id: factura.id, profile_id: profileId,
+      fecha, monto_bruto: montoNum, honorarios_pct: 12,
+      metodo, estado: "en_proceso",
+    });
+    if (pErr) { setErr("Error al registrar pago: " + pErr.message); setLoading(false); return; }
+
+    await sb.from("facturas").update({ estado: "pagada" }).eq("id", factura.id);
+    setLoading(false);
+    onConfirmed();
+  }
+
+  const iCls = "w-full h-10 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14px] text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all";
+
+  return (
+    <div className="fixed inset-0 bg-[#0F172A]/45 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-6"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-xl">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#F1F5F9]">
+          <div>
+            <h2 className="text-[17px] font-semibold text-[#0F172A]">Registrar pago recibido</h2>
+            <p className="text-[12.5px] text-[#6B7280] mt-0.5">{factura.deudores?.razon_social} · N°{factura.numero}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[#F1F5F9] text-[#6B7280] inline-flex items-center justify-center">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          {err && <div className="px-4 py-3 rounded-[10px] bg-[#FBE9E9] text-[#B23B3B] text-[13px]">{err}</div>}
+          {/* Info factura */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] px-4 py-3 text-[13px] flex justify-between">
+            <span className="text-[#6B7280]">Monto original</span>
+            <span className="font-semibold text-[#0F172A]">{formatCLP(factura.monto)}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Fecha de pago</label>
+              <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className={iCls} />
+            </div>
+            <div>
+              <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Método</label>
+              <select value={metodo} onChange={e => setMetodo(e.target.value)} className={`${iCls} cursor-pointer`}>
+                <option>Transferencia</option>
+                <option>Cheque</option>
+                <option>Efectivo</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Monto cobrado (CLP)</label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] text-sm">$</span>
+              <input value={monto} onChange={e => setMonto(e.target.value.replace(/\D/g, ""))}
+                className={`${iCls} pl-7`} />
+            </div>
+          </div>
+          <p className="text-[11.5px] text-[#9CA3AF]">Se registrará un pago con 12% de honorarios Cleco. El neto a desembolsar se calculará automáticamente.</p>
+        </div>
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#F1F5F9]">
+          <button onClick={onClose} className="h-9 px-4 text-[13.5px] font-medium text-[#1E293B] border border-[#E2E8F0] rounded-[8px] hover:bg-[#F1F5F9] transition-all">Cancelar</button>
+          <button onClick={confirmar} disabled={loading}
+            className="h-9 px-4 text-[13.5px] font-medium text-white bg-[#1F7A4D] hover:bg-[#186640] rounded-[8px] disabled:opacity-60 transition-all flex items-center gap-2">
+            {loading ? "Registrando…" : <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Confirmar pago
+            </>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Row action menu ── */
 function RowMenu({ factura, onMarcarPagada, onEditar }: { factura: FacturaWithDeudor; onMarcarPagada: (id: string) => void; onEditar: (f: FacturaWithDeudor) => void }) {
   const [open, setOpen] = useState(false);
@@ -345,8 +481,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
   const [periodo,      setPeriodo]      = useState<Periodo>("todos");
   const [page,         setPage]         = useState(1);
   const [detail,       setDetail]       = useState<FacturaWithDeudor | null>(null);
-  const [editFactura,  setEditFactura]  = useState<FacturaWithDeudor | null>(null);
-  const [bulkModal,    setBulkModal]    = useState(false);
+  const [editFactura,    setEditFactura]    = useState<FacturaWithDeudor | null>(null);
+  const [confirmarPago,  setConfirmarPago]  = useState<FacturaWithDeudor | null>(null);
+  const [bulkModal,      setBulkModal]      = useState(false);
   const [sortField,    setSortField]    = useState<SortField>(null);
   const [sortDir,      setSortDir]      = useState<SortDir>("asc");
 
@@ -399,10 +536,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
   function handleEstado(v: Estado) { setEstado(v); setPage(1); }
   function handlePeriodo(v: Periodo) { setPeriodo(v); setPage(1); }
 
-  async function marcarPagada(id: string) {
-    const sb = createClient();
-    await sb.from("facturas").update({ estado: "pagada" }).eq("id", id);
-    setFacturas(prev => prev.map(f => f.id === id ? { ...f, estado: "pagada" } : f));
+  function marcarPagada(id: string) {
+    const factura = facturas.find(f => f.id === id);
+    if (factura) setConfirmarPago(factura);
   }
 
   function doExport() {
@@ -420,6 +556,17 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
 
   return (
     <>
+      {confirmarPago && (
+        <ConfirmarPagoModal
+          factura={confirmarPago} profileId={profileId}
+          onClose={() => setConfirmarPago(null)}
+          onConfirmed={() => {
+            setFacturas(prev => prev.map(f => f.id === confirmarPago.id ? { ...f, estado: "pagada" } : f));
+            setConfirmarPago(null);
+            refetchFacturas();
+          }}
+        />
+      )}
       {bulkModal && <BulkUploadModal open={bulkModal} onClose={() => { setBulkModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {modal && <UploadModal open={modal} onClose={() => { setModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {editFactura && <EditModal factura={editFactura} onClose={() => setEditFactura(null)} onSaved={(updated) => { setFacturas(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f)); setEditFactura(null); }} />}
@@ -515,7 +662,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
                         <SortIcon active={sortField === "monto"} dir={sortDir} />
                       </span>
                     </th>
-                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">Estado</th>
+                    <th className="text-left text-[12px] font-medium text-[#6B7280] uppercase tracking-wide px-4 py-2.5 border-b border-[#E2E8F0]">
+                      <EstadoColumnFilter value={estado} onChange={v => { handleEstado(v); }} />
+                    </th>
                     <th className="border-b border-[#E2E8F0]" />
                   </tr>
                 </thead>
