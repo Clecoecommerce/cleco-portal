@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRUT, validarRUT } from "@/lib/utils";
+import { parsearXmlSii } from "@/lib/parseSiiXml";
+import { enviarEmailCobranza } from "@/lib/email";
 import { Button } from "./Button";
 
 interface Props { open: boolean; onClose: () => void; profileId: string; onCreated?: () => void; }
@@ -19,7 +21,8 @@ function formatPhone(val: string): string {
   return r;
 }
 
-const iCls = "w-full h-10 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all";
+const iCls      = "w-full h-10 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all";
+const iClsGreen = "w-full h-10 px-3.5 border border-[#1F7A4D]/40 rounded-[10px] text-[14px] text-[#0F172A] bg-[#F0FBF4] placeholder-[#9CA3AF] focus:outline-none focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/12 transition-all";
 
 function Field({ label, req, children }: { label: string; req?: boolean; children: React.ReactNode }) {
   return (
@@ -33,18 +36,24 @@ function Field({ label, req, children }: { label: string; req?: boolean; childre
 }
 
 export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
-  const [stage,    setStage]    = useState<Stage>("form");
-  const [drag,     setDrag]     = useState(false);
-  const [file,     setFile]     = useState<File | null>(null);
-  const [folio,    setFolio]    = useState("");
-  const [err,      setErr]      = useState("");
-  const [repactar, setRepactar] = useState(false);
-  const [montoRaw, setMontoRaw] = useState("");
-  const [cuotas,   setCuotas]   = useState(2);
-  const [rutVal,    setRutVal]    = useState("");
-  const [rutError,  setRutError]  = useState("");
-  const [montoError, setMontoError] = useState("");
-  const [telVal,    setTelVal]    = useState("");
+  const [stage,       setStage]       = useState<Stage>("form");
+  const [drag,        setDrag]        = useState(false);
+  const [file,        setFile]        = useState<File | null>(null);
+  const [folio,       setFolio]       = useState("");
+  const [err,         setErr]         = useState("");
+  const [repactar,    setRepactar]    = useState(false);
+  const [montoRaw,    setMontoRaw]    = useState("");
+  const [cuotas,      setCuotas]      = useState(2);
+  const [rutVal,      setRutVal]      = useState("");
+  const [rutError,    setRutError]    = useState("");
+  const [montoError,  setMontoError]  = useState("");
+  const [telVal,      setTelVal]      = useState("");
+  // Campos controlados para pre-rellenar desde XML
+  const [numeroVal,      setNumeroVal]      = useState("");
+  const [razonSocialVal, setRazonSocialVal] = useState("");
+  const [fechaVal,       setFechaVal]       = useState("");
+  const [xmlExtraido,    setXmlExtraido]    = useState(false);
+  const [emailEnviado,   setEmailEnviado]   = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monto    = parseInt(montoRaw || "0", 10);
@@ -54,6 +63,8 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
     setStage("form"); setFile(null); setErr("");
     setRepactar(false); setMontoRaw(""); setCuotas(2);
     setRutVal(""); setRutError(""); setMontoError(""); setTelVal("");
+    setNumeroVal(""); setRazonSocialVal(""); setFechaVal("");
+    setXmlExtraido(false); setEmailEnviado(false);
   }
   function close() { if (stage !== "loading") { reset(); onClose(); } }
 
@@ -61,6 +72,25 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
     if (!/\.(pdf|xml)$/i.test(f.name)) { setErr("Solo PDF o XML (máx. 10 MB)."); return; }
     if (f.size > 10 * 1024 * 1024)     { setErr("El archivo supera 10 MB."); return; }
     setErr(""); setFile(f);
+
+    // Si es XML del SII, parsear y pre-rellenar
+    if (/\.xml$/i.test(f.name)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const datos = parsearXmlSii(text);
+        if (datos) {
+          if (datos.folio)              setNumeroVal(datos.folio);
+          if (datos.monto)              setMontoRaw(datos.monto);
+          if (datos.fechaVencimiento)   setFechaVal(datos.fechaVencimiento);
+          if (datos.rutDeudor)          setRutVal(datos.rutDeudor);
+          if (datos.razonSocialDeudor)  setRazonSocialVal(datos.razonSocialDeudor);
+          setXmlExtraido(true);
+          setRutError("");
+        }
+      };
+      reader.readAsText(f, "ISO-8859-1");
+    }
   }
 
   function fmtMonto(raw: string) {
@@ -72,22 +102,22 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
     e.preventDefault();
     setErr(""); setStage("loading");
     const fd = e.currentTarget;
-    const g  = (n: string) => (fd.elements.namedItem(n) as HTMLInputElement).value.trim();
+    const g  = (n: string) => (fd.elements.namedItem(n) as HTMLInputElement)?.value?.trim() ?? "";
 
-    const rut           = rutVal || g("rut");
-    const razon_social  = g("razon_social");
-    const email_c       = g("email_contacto");
-    const tel_c         = telVal || g("telefono_contacto");
-    const numero        = g("numero");
-    const fecha_venc    = g("fecha_vencimiento");
-    const notas         = (fd.elements.namedItem("notas") as HTMLTextAreaElement).value.trim();
+    const rut          = rutVal;
+    const razon_social = razonSocialVal;
+    const email_c      = g("email_contacto");
+    const tel_c        = telVal || g("telefono_contacto");
+    const numero       = numeroVal;
+    const fecha_venc   = fechaVal;
+    const notas        = (fd.elements.namedItem("notas") as HTMLTextAreaElement)?.value?.trim() ?? "";
 
-    if (!validarRUT(rut))    { setErr("RUT inválido. Verifica el dígito verificador."); setStage("form"); return; }
-    if (!razon_social)       { setErr("La razón social es obligatoria.");   setStage("form"); return; }
-    if (!email_c || !tel_c) { setErr("Email y teléfono son obligatorios."); setStage("form"); return; }
-    if (!g("numero"))        { setErr("El número de factura es obligatorio."); setStage("form"); return; }
-    if (!g("fecha_vencimiento")) { setErr("La fecha de vencimiento es obligatoria."); setStage("form"); return; }
-    if (monto <= 0)          { setMontoError("El monto debe ser mayor a $0"); setStage("form"); return; }
+    if (!validarRUT(rut))         { setErr("RUT inválido. Verifica el dígito verificador."); setStage("form"); return; }
+    if (!razon_social)            { setErr("La razón social es obligatoria.");              setStage("form"); return; }
+    if (!email_c || !tel_c)      { setErr("Email y teléfono son obligatorios.");            setStage("form"); return; }
+    if (!numero)                  { setErr("El número de factura es obligatorio.");          setStage("form"); return; }
+    if (!fecha_venc)              { setErr("La fecha de vencimiento es obligatoria.");       setStage("form"); return; }
+    if (monto <= 0)               { setMontoError("El monto debe ser mayor a $0");          setStage("form"); return; }
 
     const sb = createClient();
     let archivo_url: string | null = null;
@@ -114,6 +144,17 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
     });
 
     if (fErr) { setErr("Error al guardar factura: " + fErr.message); setStage("form"); return; }
+
+    // Email automático al deudor (fire and forget — no bloquea el flujo)
+    enviarEmailCobranza({
+      profileId,
+      emailDeudor: email_c,
+      nombreDeudor: razon_social,
+      numeroFactura: numero,
+      monto,
+      fechaVencimiento: fecha_venc,
+    }).then(() => setEmailEnviado(true)).catch(() => {/* silencioso */});
+
     setFolio(`CL-2026-${numero.padStart(5, "0").slice(-5)}`);
     setStage("success");
     onCreated?.();
@@ -144,21 +185,37 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
             <div className="px-6 py-5 space-y-6">
               {err && <div className="px-4 py-3 rounded-[10px] bg-[#FBE9E9] text-[#B23B3B] text-[13px]">{err}</div>}
 
+              {/* Banner XML extraído */}
+              {xmlExtraido && (
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-[#E5F4EC] border border-[#1F7A4D]/20 text-[#1F7A4D] text-[13px]">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span><b>Datos extraídos del XML del SII.</b> Revisa y completa los campos de contacto.</span>
+                </div>
+              )}
+
               {/* 1 — Deudor */}
               <section>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3">1 · Datos del deudor</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <Field label="RUT del deudor" req>
-                    <input name="rut" required placeholder="77.123.456-7"
-                      className={`${iCls} ${rutError ? "border-[#B23B3B] focus:border-[#B23B3B] focus:ring-[#B23B3B]/12" : ""}`}
+                    <input
+                      name="rut" required placeholder="77.123.456-7"
+                      className={`${xmlExtraido && rutVal ? iClsGreen : iCls} ${rutError ? "!border-[#B23B3B] focus:!border-[#B23B3B]" : ""}`}
                       value={rutVal}
-                      onChange={e => { setRutVal(formatRUT(e.target.value)); setRutError(""); }}
+                      onChange={e => { setRutVal(formatRUT(e.target.value)); setRutError(""); setXmlExtraido(false); }}
                       onBlur={() => { if (rutVal && !validarRUT(rutVal)) setRutError("RUT inválido"); }}
                       maxLength={12}
                     />
                     {rutError && <p className="mt-1 text-[12px] text-[#B23B3B]">{rutError}</p>}
                   </Field>
-                  <Field label="Razón social" req><input name="razon_social" required placeholder="Empresa S.A." className={iCls} /></Field>
+                  <Field label="Razón social" req>
+                    <input
+                      name="razon_social" required placeholder="Empresa S.A."
+                      className={xmlExtraido && razonSocialVal ? iClsGreen : iCls}
+                      value={razonSocialVal}
+                      onChange={e => { setRazonSocialVal(e.target.value); setXmlExtraido(false); }}
+                    />
+                  </Field>
                 </div>
               </section>
 
@@ -168,7 +225,9 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
                 <div className="bg-[#EFF6FF]/50 border border-[#DBEAFE] rounded-[12px] p-4 space-y-3.5">
                   <p className="text-[12px] text-[#2563EB]">Necesitamos estos datos para contactar al deudor en el canal correcto.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <Field label="Email de contacto" req><input name="email_contacto" type="email" required placeholder="contacto@empresa.cl" className={iCls} /></Field>
+                    <Field label="Email de contacto" req>
+                      <input name="email_contacto" type="email" required placeholder="contacto@empresa.cl" className={iCls} />
+                    </Field>
                     <Field label="Teléfono / WhatsApp" req>
                       <input name="telefono_contacto" required placeholder="+56 9 8765 4321" className={iCls}
                         value={telVal}
@@ -182,10 +241,24 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
 
               {/* 3 — Factura */}
               <section>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3">3 · Datos de la factura</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widests text-[#9CA3AF] mb-3">3 · Datos de la factura</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <Field label="N° de factura" req><input name="numero" required placeholder="0008821" className={iCls} /></Field>
-                  <Field label="Fecha de vencimiento" req><input name="fecha_vencimiento" type="date" required className={iCls} /></Field>
+                  <Field label="N° de factura" req>
+                    <input
+                      name="numero" required placeholder="0008821"
+                      className={xmlExtraido && numeroVal ? iClsGreen : iCls}
+                      value={numeroVal}
+                      onChange={e => { setNumeroVal(e.target.value); setXmlExtraido(false); }}
+                    />
+                  </Field>
+                  <Field label="Fecha de vencimiento" req>
+                    <input
+                      name="fecha_vencimiento" type="date" required
+                      className={xmlExtraido && fechaVal ? iClsGreen : iCls}
+                      value={fechaVal}
+                      onChange={e => { setFechaVal(e.target.value); setXmlExtraido(false); }}
+                    />
+                  </Field>
                   <div className="sm:col-span-2">
                     <Field label="Monto total (CLP)" req>
                       <div className="relative">
@@ -193,9 +266,9 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
                         <input
                           name="monto" required placeholder="1.250.000"
                           value={fmtMonto(montoRaw)}
-                          onChange={(e) => { setMontoRaw(e.target.value.replace(/\D/g, "")); setMontoError(""); }}
+                          onChange={e => { setMontoRaw(e.target.value.replace(/\D/g, "")); setMontoError(""); setXmlExtraido(false); }}
                           onBlur={() => { if (montoRaw && parseInt(montoRaw) <= 0) setMontoError("El monto debe ser mayor a $0"); }}
-                          className={`${iCls} pl-7 ${montoError ? "border-[#B23B3B] focus:border-[#B23B3B] focus:ring-[#B23B3B]/12" : ""}`}
+                          className={`${xmlExtraido && montoRaw ? iClsGreen : iCls} pl-7 ${montoError ? "!border-[#B23B3B]" : ""}`}
                         />
                       </div>
                       {montoError && <p className="mt-1 text-[12px] text-[#B23B3B]">{montoError}</p>}
@@ -223,12 +296,11 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
                       <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${repactar ? "translate-x-5" : "translate-x-1"}`} />
                     </div>
                   </button>
-
                   {repactar && (
                     <div className="border-t border-[#F1F5F9] px-4 py-4 bg-[#FAFBFD] space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <Field label="Número de cuotas">
-                          <select value={cuotas} onChange={(e) => setCuotas(Number(e.target.value))} className={`${iCls} cursor-pointer`}>
+                          <select value={cuotas} onChange={e => setCuotas(Number(e.target.value))} className={`${iCls} cursor-pointer`}>
                             {[2,3,4,5,6,9,12].map(n => <option key={n} value={n}>{n} cuotas</option>)}
                           </select>
                         </Field>
@@ -258,22 +330,24 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
                 <div
                   className={`border-[1.5px] border-dashed rounded-[10px] p-5 text-center cursor-pointer transition-all mb-3 ${drag || file ? "border-[#2563EB] bg-[#EFF6FF]" : "border-[#E2E8F0] bg-[#FAFBFD] hover:border-[#2563EB]"}`}
                   onClick={() => fileRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+                  onDragOver={e => { e.preventDefault(); setDrag(true); }}
                   onDragLeave={() => setDrag(false)}
-                  onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) addFile(f); }}
+                  onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) addFile(f); }}
                 >
                   {file ? (
                     <span className="inline-flex items-center gap-2 bg-white border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-[12.5px] text-[#0F172A] font-medium">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       {file.name} · {(file.size / 1024).toFixed(0)} KB
+                      {xmlExtraido && <span className="ml-1 text-[#1F7A4D] font-semibold">· SII ✓</span>}
                     </span>
                   ) : (
                     <>
                       <p className="text-[13.5px] font-medium text-[#0F172A]">Arrastra tu factura o <b className="text-[#2563EB]">busca en tu equipo</b></p>
-                      <p className="text-[12px] text-[#6B7280] mt-0.5">PDF o XML del SII · Máx. 10 MB · Opcional</p>
+                      <p className="text-[12px] text-[#6B7280] mt-0.5">PDF o XML del SII · Máx. 10 MB · Los XMLs se auto-completan</p>
                     </>
                   )}
-                  <input ref={fileRef} type="file" accept=".pdf,.xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) addFile(f); }} />
+                  <input ref={fileRef} type="file" accept=".pdf,.xml" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) addFile(f); }} />
                 </div>
                 <Field label="Notas internas (opcional)">
                   <textarea name="notas" rows={2} placeholder="Ej: cliente prometió pagar el 15/05…"
@@ -306,6 +380,12 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
               <div className="flex justify-between text-[#6B7280]"><span>Folio</span><b className="text-[#0F172A]">{folio}</b></div>
               <div className="flex justify-between text-[#6B7280]"><span>Inicio gestión</span>
                 <b className="text-[#0F172A]">{new Date(Date.now() + 86400000).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</b>
+              </div>
+              <div className="flex justify-between text-[#6B7280]">
+                <span>Email al deudor</span>
+                <span className={emailEnviado ? "text-[#1F7A4D] font-medium" : "text-[#9CA3AF]"}>
+                  {emailEnviado ? "✓ Enviado" : "Enviando…"}
+                </span>
               </div>
             </div>
             <div className="flex justify-center gap-2 mt-7">
