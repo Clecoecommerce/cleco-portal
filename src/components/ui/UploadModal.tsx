@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRUT, validarRUT } from "@/lib/utils";
-import { parsearXmlSii } from "@/lib/parseSiiXml";
+import { leerArchivoXml } from "@/lib/parseSiiXml";
 import { enviarEmailCobranza } from "@/lib/email";
 import { Button } from "./Button";
 
@@ -75,21 +75,17 @@ export function UploadModal({ open, onClose, profileId, onCreated }: Props) {
 
     // Si es XML del SII, parsear y pre-rellenar
     if (/\.xml$/i.test(f.name)) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        const datos = parsearXmlSii(text);
+      leerArchivoXml(f).then(datos => {
         if (datos) {
-          if (datos.folio)              setNumeroVal(datos.folio);
-          if (datos.monto)              setMontoRaw(datos.monto);
-          if (datos.fechaVencimiento)   setFechaVal(datos.fechaVencimiento);
-          if (datos.rutDeudor)          setRutVal(datos.rutDeudor);
-          if (datos.razonSocialDeudor)  setRazonSocialVal(datos.razonSocialDeudor);
+          if (datos.folio)             setNumeroVal(datos.folio);
+          if (datos.monto)             setMontoRaw(datos.monto);
+          if (datos.fechaVencimiento)  setFechaVal(datos.fechaVencimiento);
+          if (datos.rutDeudor)         setRutVal(datos.rutDeudor);
+          if (datos.razonSocialDeudor) setRazonSocialVal(datos.razonSocialDeudor);
           setXmlExtraido(true);
           setRutError("");
         }
-      };
-      reader.readAsText(f, "ISO-8859-1");
+      });
     }
   }
 
