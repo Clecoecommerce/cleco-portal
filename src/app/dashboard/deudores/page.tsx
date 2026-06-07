@@ -4,7 +4,7 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { DeudoresClient } from "./DeudoresClient";
 import type { Deudor } from "@/types/database";
 
-type DeudorWithFacturas = Deudor & { facturas: { id: string; monto: number; estado: string }[] };
+type DeudorWithFacturas = Deudor & { facturas: { id: string; numero: string; monto: number; fecha_vencimiento: string; estado: string }[] };
 
 export default async function DeudoresPage() {
   const supabase = await createClient();
@@ -13,7 +13,7 @@ export default async function DeudoresPage() {
 
   const { data: rawDeudores } = await supabase
     .from("deudores")
-    .select("*, facturas(id, monto, estado)")
+    .select("*, facturas(id, numero, monto, fecha_vencimiento, estado)")
     .eq("profile_id", user.id)
     .order("mora_dias", { ascending: false });
 
