@@ -158,29 +158,16 @@ async function extractFromPdf(buffer: ArrayBuffer) {
   }
 }
 
-// ─── Image OCR (gratis — tesseract.js) ───────────────────────────────────────
+// ─── Images → entrada manual ──────────────────────────────────────────────────
+// Tesseract.js no es compatible con entornos serverless (Vercel).
+// Las imágenes crean una fila editable vacía para que el usuario complete los datos.
 
-async function extractFromImage(buffer: ArrayBuffer, ext: string) {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createWorker } = require("tesseract.js");
-    const worker = await createWorker("spa", 1, {
-      cachePath: "/tmp",
-      logger: () => {},
-    });
-    const { data } = await worker.recognize(Buffer.from(buffer));
-    await worker.terminate();
-
-    const text = data.text ?? "";
-    if (!text.trim() || text.length < 20) {
-      return { error: "No se pudo leer el texto de la imagen. Intenta con una foto más nítida o sube el XML del SII." };
-    }
-    const datos = parsearTextoFactura(text);
-    return { ...datos, fuente: "ocr" as const };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error desconocido";
-    return { error: `Error de OCR en imagen .${ext}: ${msg.slice(0, 100)}. Sube el XML del SII para extracción automática perfecta.` };
-  }
+function entradaManualImagen() {
+  return {
+    folio: "", rutDeudor: "", razonSocialDeudor: "",
+    monto: "", fechaEmision: "", fechaVencimiento: "",
+    fuente: "manual" as const,
+  };
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -213,10 +200,7 @@ export async function POST(req: NextRequest) {
           }
 
           if (["png", "jpg", "jpeg"].includes(ext)) {
-            const buffer = await file.arrayBuffer();
-            const result = await extractFromImage(buffer, ext);
-            if ("error" in result) return { fileName: file.name, status: "error", error: result.error };
-            return { fileName: file.name, status: "ok", datos: result };
+            return { fileName: file.name, status: "ok", datos: entradaManualImagen() };
           }
 
           return { fileName: file.name, status: "error", error: `Formato no soportado: .${ext}` };

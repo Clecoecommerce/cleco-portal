@@ -14,7 +14,7 @@ interface ExtractedData {
   monto: string;
   fechaEmision: string;
   fechaVencimiento: string;
-  fuente: "xml" | "vision";
+  fuente: "xml" | "vision" | "pdf" | "ocr" | "manual";
 }
 
 type RowStatus = "extracting" | "ready" | "duplicate" | "invalid" | "error";
@@ -34,7 +34,7 @@ interface InvoiceRow {
   errorMsg: string;
   duplicateDate?: string;
   include: boolean;
-  fuente?: "xml" | "vision";
+  fuente?: "xml" | "vision" | "pdf" | "ocr" | "manual";
 }
 
 interface SavedFolio {
@@ -129,6 +129,8 @@ function StatusBadge({ row }: { row: InvoiceRow }) {
     return <span className="text-[#9CA3AF] text-[12px]">Omitido</span>;
   if (row.status === "duplicate")
     return <span className="inline-flex items-center gap-1 text-[#B7791F] font-medium text-[12px]">⚠ Duplicado</span>;
+  if (row.status === "invalid" && row.fuente === "manual")
+    return <span className="inline-flex items-center gap-1 text-[#7C3AED] font-medium text-[12px]">✏ Manual</span>;
   if (row.status === "invalid")
     return <span className="inline-flex items-center gap-1 text-[#B23B3B] font-medium text-[12px]">✗ Inválido</span>;
   if (row.status === "error")
@@ -256,6 +258,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
             };
           } else {
             const d: ExtractedData = result.datos;
+            const esManual = d.fuente === "manual";
             resultsRef.current[i] = {
               ...resultsRef.current[i],
               folio: d.folio ?? "",
@@ -265,7 +268,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
               fechaEmision: d.fechaEmision ?? "",
               fechaVencimiento: d.fechaVencimiento ?? "",
               fuente: d.fuente,
-              status: "ready",
+              status: esManual ? "invalid" : "ready",
+              errorMsg: esManual ? "Imagen: completa los datos en la tabla y haz clic en Guardar" : "",
               include: true,
             };
           }
@@ -691,8 +695,10 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                         <React.Fragment key={row.id}>
                           <tr
                             className={`transition-colors ${
-                              row.status === "error" || row.status === "invalid"
+                              row.status === "error"
                                 ? "bg-[#FFF8F8]"
+                                : row.status === "invalid" && row.fuente === "manual"
+                                ? "bg-[#F5F3FF]/60"
                                 : row.status === "duplicate"
                                 ? "bg-[#FFFBF0]"
                                 : !row.include
@@ -820,9 +826,17 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
                           {/* Error / duplicate message row */}
                           {row.errorMsg && (
-                            <tr className={row.status === "duplicate" ? "bg-[#FFFBF0]" : "bg-[#FFF8F8]"}>
+                            <tr className={
+                              row.status === "duplicate" ? "bg-[#FFFBF0]" :
+                              row.fuente === "manual" ? "bg-[#F5F3FF]" :
+                              "bg-[#FFF8F8]"
+                            }>
                               <td colSpan={8} className="px-4 pb-2 pt-0">
-                                <p className={`text-[11.5px] ${row.status === "duplicate" ? "text-[#B7791F]" : "text-[#B23B3B]"}`}>
+                                <p className={`text-[11.5px] ${
+                                  row.status === "duplicate" ? "text-[#B7791F]" :
+                                  row.fuente === "manual" ? "text-[#7C3AED]" :
+                                  "text-[#B23B3B]"
+                                }`}>
                                   {row.errorMsg}
                                 </p>
                               </td>
