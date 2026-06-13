@@ -307,7 +307,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
         if (current[i].status !== "ready") continue;
         const err = validateRow(current[i]);
         if (err) {
-          current[i] = { ...current[i], status: "invalid", errorMsg: err, include: false };
+          // include: true → el usuario puede corregir el campo en la tabla y guardar
+          current[i] = { ...current[i], status: "invalid", errorMsg: `⚠ ${err} — edita el campo en la tabla`, include: true };
         } else if (dupMap.has(current[i].folio)) {
           const dupDate = new Date(dupMap.get(current[i].folio)!).toLocaleDateString("es-CL", {
             day: "2-digit", month: "short", year: "numeric",
@@ -340,7 +341,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
   async function saveInvoices() {
     setStage("saving");
     const sb = createClient();
-    const toSave = rows.filter((r) => r.include && r.status === "ready");
+    // Incluir "invalid" si el usuario las dejó marcadas (pudo haber corregido los campos)
+    const toSave = rows.filter((r) => r.include && (r.status === "ready" || r.status === "invalid"));
 
     // Compute folio_cleco sequential base from current month
     const now = new Date();
@@ -428,7 +430,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
   if (!open) return null;
 
-  const readyCount = rows.filter((r) => r.include && r.status === "ready").length;
+  const readyCount = rows.filter((r) => r.include && (r.status === "ready" || r.status === "invalid")).length;
   const errorCount = rows.filter((r) => r.status === "error" || r.status === "invalid").length;
   const dupCount = rows.filter((r) => r.status === "duplicate").length;
   const allReadyChecked = rows.filter((r) => r.status === "ready").every((r) => r.include);

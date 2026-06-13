@@ -120,23 +120,47 @@ function parsearTextoFactura(text: string) {
     }
   }
 
-  // ── Fechas — busca DD/MM/YYYY o YYYY-MM-DD ──
-  const datePattern = /\b(\d{2})[\/-](\d{2})[\/-](\d{4})\b/g;
-  const isoPattern = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
-  const fechas: string[] = [];
-
-  let dm;
-  while ((dm = datePattern.exec(t)) !== null) {
-    fechas.push(`${dm[3]}-${dm[2]}-${dm[1]}`); // → YYYY-MM-DD
-  }
-  while ((dm = isoPattern.exec(t)) !== null) {
-    fechas.push(`${dm[1]}-${dm[2]}-${dm[3]}`);
+  // ── Fechas — primero busca por etiqueta, luego por posición ──
+  function parseFecha(raw: string): string {
+    // DD/MM/YYYY → YYYY-MM-DD
+    const m = raw.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    // YYYY-MM-DD directo
+    const m2 = raw.match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+    if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+    return "";
   }
 
-  // Eliminar duplicados y ordenar
-  const unicas = Array.from(new Set(fechas)).sort();
-  const fechaEmision = unicas[0] ?? "";
-  const fechaVencimiento = unicas[unicas.length - 1] ?? "";
+  // Buscar fecha de vencimiento por etiqueta
+  let fechaVencimiento = "";
+  const vencimientoMatch = t.match(
+    /(?:vencimiento|vence|vto\.?|expir[ae]|due\s*date|plazo)[^\d]{0,20}(\d{2}[\/-]\d{2}[\/-]\d{4}|\d{4}[\/-]\d{2}[\/-]\d{2})/i
+  );
+  if (vencimientoMatch?.[1]) fechaVencimiento = parseFecha(vencimientoMatch[1]);
+
+  // Buscar fecha de emisión por etiqueta
+  let fechaEmision = "";
+  const emisionMatch = t.match(
+    /(?:emisi[oó]n|emitida|fecha\s+doc|fecha\s+factura|issue\s*date)[^\d]{0,20}(\d{2}[\/-]\d{2}[\/-]\d{4}|\d{4}[\/-]\d{2}[\/-]\d{2})/i
+  );
+  if (emisionMatch?.[1]) fechaEmision = parseFecha(emisionMatch[1]);
+
+  // Fallback: recoger todas las fechas y asumir menor=emisión, mayor=vencimiento
+  if (!fechaVencimiento || !fechaEmision) {
+    const datePattern = /\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/g;
+    const fechas: string[] = [];
+    let dm;
+    while ((dm = datePattern.exec(t)) !== null) {
+      const f = `${dm[3]}-${dm[2]}-${dm[1]}`;
+      // Filtrar fechas razonables (entre 2000 y 2099)
+      if (f >= "2000-01-01" && f <= "2099-12-31") fechas.push(f);
+    }
+    const unicas = Array.from(new Set(fechas)).sort();
+    if (!fechaEmision) fechaEmision = unicas[0] ?? "";
+    if (!fechaVencimiento) fechaVencimiento = unicas[unicas.length - 1] ?? "";
+    // Si solo hay una fecha, es el vencimiento (más importante)
+    if (unicas.length === 1) { fechaVencimiento = unicas[0]; fechaEmision = ""; }
+  }
 
   return { folio, rutDeudor, razonSocialDeudor, monto, fechaEmision, fechaVencimiento };
 }
