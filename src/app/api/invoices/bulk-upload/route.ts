@@ -146,7 +146,7 @@ function parsearTextoFactura(text: string) {
 async function extractFromPdf(buffer: ArrayBuffer) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse/lib/pdf-parse");
+    const pdfParse = require("pdf-parse");
     const data = await pdfParse(Buffer.from(buffer));
     const text = data.text ?? "";
     if (!text.trim()) return { error: "El PDF no contiene texto legible. Intenta exportarlo como PDF de texto o sube el XML del SII." };
