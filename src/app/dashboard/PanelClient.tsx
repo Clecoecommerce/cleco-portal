@@ -5,6 +5,7 @@ import { Badge, estadoToBadge } from "@/components/ui/Badge";
 import { Button, IconButton } from "@/components/ui/Button";
 import { UploadModal } from "@/components/ui/UploadModal";
 import { BulkUploadModal } from "@/components/ui/BulkUploadModal";
+import { SmartUploadModal } from "@/components/ui/SmartUploadModal";
 import { formatCLP, calcularEstado } from "@/lib/utils";
 import { exportCsv } from "@/lib/exportCsv";
 import { createClient } from "@/lib/supabase/client";
@@ -484,6 +485,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
   const [editFactura,    setEditFactura]    = useState<FacturaWithDeudor | null>(null);
   const [confirmarPago,  setConfirmarPago]  = useState<FacturaWithDeudor | null>(null);
   const [bulkModal,      setBulkModal]      = useState(false);
+  const [smartModal,     setSmartModal]     = useState(false);
   const [sortField,    setSortField]    = useState<SortField>(null);
   const [sortDir,      setSortDir]      = useState<SortDir>("asc");
 
@@ -568,6 +570,7 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
         />
       )}
       {bulkModal && <BulkUploadModal open={bulkModal} onClose={() => { setBulkModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
+      {smartModal && <SmartUploadModal open={smartModal} onClose={() => { setSmartModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {modal && <UploadModal open={modal} onClose={() => { setModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {editFactura && <EditModal factura={editFactura} onClose={() => setEditFactura(null)} onSaved={(updated) => { setFacturas(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f)); setEditFactura(null); }} />}
       {detail && <DetailPanel f={detail} onClose={() => setDetail(null)} />}
@@ -616,9 +619,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
                 <IconButton title="Exportar CSV" onClick={doExport}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </IconButton>
-                <Button size="sm" variant="secondary" onClick={() => setBulkModal(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Subida masiva
+                <Button size="sm" variant="secondary" onClick={() => setSmartModal(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Carga inteligente
                 </Button>
                 <Button size="sm" variant="primary" onClick={() => setModal(true)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
