@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 120;
 
-// ─── Server-side XML extraction (regex — no DOMParser in Node.js) ────────────
+// ─── XML parser (regex — server-side, no DOMParser) ──────────────────────────
 
 function getTag(xml: string, tag: string): string {
-  // Try bare tag and namespaced variants
   const patterns = [
     new RegExp(`<${tag}\\s*>([^<]+)<\\/${tag}>`, "i"),
     new RegExp(`<[^\\s>:]+:${tag}\\s*>([^<]+)<\\/[^\\s>:]+:${tag}>`, "i"),
@@ -56,71 +54,132 @@ function parseXml(xmlText: string) {
   };
 }
 
-// ─── Claude Vision extraction ─────────────────────────────────────────────────
+// ─── Text extraction from OCR/PDF output ─────────────────────────────────────
 
-const EXTRACTION_PROMPT = `Extrae los datos de esta factura chilena y devuelve SOLO un objeto JSON válido, sin ningún texto adicional antes ni después. Usa exactamente estos campos:
-{
-  "folio": "número de factura o folio (solo dígitos)",
-  "rutDeudor": "RUT del receptor en formato XX.XXX.XXX-X",
-  "razonSocialDeudor": "razón social del receptor",
-  "monto": "monto total en pesos chilenos (solo dígitos, sin puntos ni $ ni comas)",
-  "fechaEmision": "fecha de emisión en formato YYYY-MM-DD",
-  "fechaVencimiento": "fecha de vencimiento en formato YYYY-MM-DD"
-}
-Si un campo no está visible, usa cadena vacía "".`;
+function parsearTextoFactura(text: string) {
+  const t = text.replace(/\r/g, "\n");
 
-async function extractVision(base64: string, mediaType: string) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return { error: "ANTHROPIC_API_KEY no configurada. Usa XML del SII para extracción automática." };
+  // ── Folio ──
+  let folio = "";
+  const folioPatterns = [
+    /n[°º\.]\s*(?:de\s+factura)?\s*[:\s]*(\d{3,12})/i,
+    /folio\s*[:\s]+(\d{3,12})/i,
+    /factura\s+(?:electr[oó]nica\s+)?n[°º]?\s*[:\s]*(\d{3,12})/i,
+    /invoice\s*#?\s*[:\s]*(\d{3,12})/i,
+  ];
+  for (const p of folioPatterns) {
+    const m = t.match(p);
+    if (m?.[1]) { folio = m[1]; break; }
   }
 
-  const client = new Anthropic({ apiKey });
+  // ── RUT deudor — toma todos los RUTs del texto, el más relevante es el del receptor ──
+  const rutRegex = /\b(\d{1,2}\.?\d{3}\.?\d{3}-[\dkK])\b/g;
+  const ruts: string[] = [];
+  let rm;
+  while ((rm = rutRegex.exec(t)) !== null) {
+    if (rm[1]) ruts.push(fmtRut(rm[1]));
+  }
 
-  const contentBlock =
-    mediaType === "application/pdf"
-      ? [
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } } as any,
-          { type: "text" as const, text: EXTRACTION_PROMPT },
-        ]
-      : [
-          {
-            type: "image" as const,
-            source: {
-              type: "base64" as const,
-              media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: base64,
-            },
-          },
-          { type: "text" as const, text: EXTRACTION_PROMPT },
-        ];
+  // El RUT del receptor suele aparecer junto a etiquetas como "R.U.T.", "RUT", "Receptor"
+  let rutDeudor = "";
+  const rutLabel = t.match(/(?:r\.?u\.?t\.?|rut)\s*[:\s]+(\d{1,2}\.?\d{3}\.?\d{3}-[\dkK])/i);
+  if (rutLabel?.[1]) {
+    rutDeudor = fmtRut(rutLabel[1]);
+  } else if (ruts.length > 0) {
+    rutDeudor = ruts[0] ?? "";
+  }
 
+  // ── Razón social ──
+  let razonSocialDeudor = "";
+  const razonPatterns = [
+    /raz[oó]n\s+social\s*[:\s]+([^\n\r$]{3,60})/i,
+    /receptor\s*[:\s]+([^\n\r$]{3,60})/i,
+    /cliente\s*[:\s]+([^\n\r$]{3,60})/i,
+    /(?:señor(?:es)?|sr\.?)\s*[:\s]+([^\n\r$]{3,60})/i,
+  ];
+  for (const p of razonPatterns) {
+    const m = t.match(p);
+    const val = m?.[1]?.trim();
+    if (val && val.length > 2) { razonSocialDeudor = titleCase(val); break; }
+  }
+
+  // ── Monto total ──
+  let monto = "";
+  const montoPatterns = [
+    /total\s*\(?clp\)?\s*[\$\s:]*\$?\s*([\d.,]+)/i,
+    /total\s+a\s+pagar\s*[\$\s:]*\$?\s*([\d.,]+)/i,
+    /monto\s+total\s*[\$\s:]*\$?\s*([\d.,]+)/i,
+    /total\s*[\$\s:]*\$\s*([\d.,]+)/i,
+    /\$\s*([\d.,]{4,})\s*$/m,
+  ];
+  for (const p of montoPatterns) {
+    const m = t.match(p);
+    if (m?.[1]) {
+      monto = m[1].replace(/\./g, "").replace(/,/g, "");
+      break;
+    }
+  }
+
+  // ── Fechas — busca DD/MM/YYYY o YYYY-MM-DD ──
+  const datePattern = /\b(\d{2})[\/-](\d{2})[\/-](\d{4})\b/g;
+  const isoPattern = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
+  const fechas: string[] = [];
+
+  let dm;
+  while ((dm = datePattern.exec(t)) !== null) {
+    fechas.push(`${dm[3]}-${dm[2]}-${dm[1]}`); // → YYYY-MM-DD
+  }
+  while ((dm = isoPattern.exec(t)) !== null) {
+    fechas.push(`${dm[1]}-${dm[2]}-${dm[3]}`);
+  }
+
+  // Eliminar duplicados y ordenar
+  const unicas = Array.from(new Set(fechas)).sort();
+  const fechaEmision = unicas[0] ?? "";
+  const fechaVencimiento = unicas[unicas.length - 1] ?? "";
+
+  return { folio, rutDeudor, razonSocialDeudor, monto, fechaEmision, fechaVencimiento };
+}
+
+// ─── PDF extraction (gratis — pdf-parse) ─────────────────────────────────────
+
+async function extractFromPdf(buffer: ArrayBuffer) {
   try {
-    const msg = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: contentBlock }],
-    });
-
-    const text = msg.content
-      .filter((c) => c.type === "text")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((c) => (c as any).text)
-      .join("");
-
-    const match = text.match(/\{[\s\S]*?\}/);
-    if (!match) return { error: "No se pudo extraer datos de la imagen. Intenta con una foto más clara o sube el XML." };
-
-    return { ...JSON.parse(match[0]), fuente: "vision" as const };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse = require("pdf-parse/lib/pdf-parse");
+    const data = await pdfParse(Buffer.from(buffer));
+    const text = data.text ?? "";
+    if (!text.trim()) return { error: "El PDF no contiene texto legible. Intenta exportarlo como PDF de texto o sube el XML del SII." };
+    const datos = parsearTextoFactura(text);
+    return { ...datos, fuente: "pdf" as const };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Error desconocido";
-    // Retry once on transient errors
-    if (msg.includes("overloaded") || msg.includes("529") || msg.includes("rate")) {
-      await new Promise((r) => setTimeout(r, 2000));
-      return extractVision(base64, mediaType);
+    return { error: `No se pudo leer el PDF: ${msg.slice(0, 100)}` };
+  }
+}
+
+// ─── Image OCR (gratis — tesseract.js) ───────────────────────────────────────
+
+async function extractFromImage(buffer: ArrayBuffer, ext: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createWorker } = require("tesseract.js");
+    const worker = await createWorker("spa", 1, {
+      cachePath: "/tmp",
+      logger: () => {},
+    });
+    const { data } = await worker.recognize(Buffer.from(buffer));
+    await worker.terminate();
+
+    const text = data.text ?? "";
+    if (!text.trim() || text.length < 20) {
+      return { error: "No se pudo leer el texto de la imagen. Intenta con una foto más nítida o sube el XML del SII." };
     }
-    return { error: `Error de visión: ${msg.slice(0, 120)}` };
+    const datos = parsearTextoFactura(text);
+    return { ...datos, fuente: "ocr" as const };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Error desconocido";
+    return { error: `Error de OCR en imagen .${ext}: ${msg.slice(0, 100)}. Sube el XML del SII para extracción automática perfecta.` };
   }
 }
 
@@ -135,31 +194,32 @@ export async function POST(req: NextRequest) {
     const results = await Promise.all(
       files.map(async (file) => {
         const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-
         try {
           if (ext === "xml") {
             const buffer = await file.arrayBuffer();
-            // SII uses ISO-8859-1; try both encodings
             for (const enc of ["iso-8859-1", "utf-8"] as const) {
               const text = new TextDecoder(enc).decode(buffer);
               const datos = parseXml(text);
               if (datos) return { fileName: file.name, status: "ok", datos };
             }
-            return { fileName: file.name, status: "error", error: "XML del SII no válido — faltan etiquetas Folio, MntTotal o RUTRecep" };
+            return { fileName: file.name, status: "error", error: "XML del SII inválido — faltan etiquetas Folio, MntTotal o RUTRecep" };
           }
 
-          let mediaType: string;
-          if (ext === "pdf") mediaType = "application/pdf";
-          else if (ext === "jpg" || ext === "jpeg") mediaType = "image/jpeg";
-          else if (ext === "png") mediaType = "image/png";
-          else return { fileName: file.name, status: "error", error: `Formato no soportado: .${ext}` };
+          if (ext === "pdf") {
+            const buffer = await file.arrayBuffer();
+            const result = await extractFromPdf(buffer);
+            if ("error" in result) return { fileName: file.name, status: "error", error: result.error };
+            return { fileName: file.name, status: "ok", datos: result };
+          }
 
-          const buffer = await file.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString("base64");
-          const result = await extractVision(base64, mediaType);
+          if (["png", "jpg", "jpeg"].includes(ext)) {
+            const buffer = await file.arrayBuffer();
+            const result = await extractFromImage(buffer, ext);
+            if ("error" in result) return { fileName: file.name, status: "error", error: result.error };
+            return { fileName: file.name, status: "ok", datos: result };
+          }
 
-          if (result.error) return { fileName: file.name, status: "error", error: result.error };
-          return { fileName: file.name, status: "ok", datos: result };
+          return { fileName: file.name, status: "error", error: `Formato no soportado: .${ext}` };
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Error inesperado";
           return { fileName: file.name, status: "error", error: msg };
