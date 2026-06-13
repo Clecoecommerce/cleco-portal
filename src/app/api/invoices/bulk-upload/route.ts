@@ -162,7 +162,24 @@ function parsearTextoFactura(text: string) {
     if (unicas.length === 1) { fechaVencimiento = unicas[0]; fechaEmision = ""; }
   }
 
-  return { folio, rutDeudor, razonSocialDeudor, monto, fechaEmision, fechaVencimiento };
+  // ── Email ──
+  let emailContacto = "";
+  const emailMatch = t.match(/\b([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})\b/);
+  if (emailMatch?.[1]) emailContacto = emailMatch[1].toLowerCase();
+
+  // ── Teléfono ──
+  let telefonoContacto = "";
+  const telPatterns = [
+    /(?:tel[eé]fono|tel\.?|fono|whatsapp|celular|m[oó]vil|phone)\s*[:/]?\s*([+\d][\d\s\-().]{6,18})/i,
+    /(\+56\s*[\d\s]{8,14})/,
+    /\b(9\s*\d{4}\s*\d{4})\b/,
+  ];
+  for (const p of telPatterns) {
+    const m = t.match(p);
+    if (m?.[1]) { telefonoContacto = m[1].trim().replace(/\s+/g, " "); break; }
+  }
+
+  return { folio, rutDeudor, razonSocialDeudor, monto, fechaEmision, fechaVencimiento, emailContacto, telefonoContacto };
 }
 
 // ─── PDF extraction (gratis — pdf-parse) ─────────────────────────────────────

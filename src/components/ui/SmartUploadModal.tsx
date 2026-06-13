@@ -14,6 +14,8 @@ interface ExtractedData {
   monto: string;
   fechaEmision: string;
   fechaVencimiento: string;
+  emailContacto: string;
+  telefonoContacto: string;
   fuente: "xml" | "vision" | "pdf" | "ocr" | "manual";
 }
 
@@ -65,6 +67,9 @@ function validateRow(row: InvoiceRow): string {
   if (row.fechaEmision && row.fechaEmision > hoy) return "Fecha de emisión no puede ser futura";
   if (row.fechaEmision && row.fechaVencimiento < row.fechaEmision)
     return "Fecha de vencimiento es anterior a la emisión";
+  if (!row.emailContacto.trim()) return "Email de contacto requerido";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.emailContacto)) return "Email inválido";
+  if (!row.telefonoContacto.trim()) return "Teléfono de contacto requerido";
   return "";
 }
 
@@ -190,7 +195,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
         const updated = { ...r, [field]: value };
         if (
           typeof value === "string" &&
-          ["folio", "rutDeudor", "razonSocial", "monto", "fechaVencimiento", "fechaEmision"].includes(field)
+          ["folio", "rutDeudor", "razonSocial", "monto", "fechaVencimiento", "fechaEmision", "emailContacto", "telefonoContacto"].includes(field)
         ) {
           const err = validateRow(updated);
           updated.status = err ? "invalid" : "ready";
@@ -267,6 +272,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
               monto: d.monto ?? "",
               fechaEmision: d.fechaEmision ?? "",
               fechaVencimiento: d.fechaVencimiento ?? "",
+              emailContacto: d.emailContacto ?? "",
+              telefonoContacto: d.telefonoContacto ?? "",
               fuente: d.fuente,
               status: esManual ? "invalid" : "ready",
               errorMsg: esManual ? "Imagen: completa los datos en la tabla y haz clic en Guardar" : "",
@@ -802,71 +809,65 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                               <StatusBadge row={row} />
                             </td>
 
-                            {/* Expand contact */}
-                            <td className="px-2 py-2.5 text-center">
-                              {row.status !== "error" && (
-                                <button
-                                  onClick={() => toggleExpand(row.id)}
-                                  title="Agregar email / teléfono de contacto"
-                                  className={`w-6 h-6 rounded-md inline-flex items-center justify-center transition-colors ${
-                                    expanded.has(row.id)
-                                      ? "bg-[#EFF6FF] text-[#2563EB]"
-                                      : "text-[#CBD5E1] hover:text-[#6B7280] hover:bg-[#F1F5F9]"
-                                  }`}
-                                >
-                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    {expanded.has(row.id) ? (
-                                      <polyline points="18 15 12 9 6 15"/>
-                                    ) : (
-                                      <polyline points="6 9 12 15 18 9"/>
-                                    )}
-                                  </svg>
-                                </button>
-                              )}
-                            </td>
+                            {/* empty last col */}
+                            <td className="w-2" />
                           </tr>
 
-                          {/* Error / duplicate message row */}
+                          {/* Error / duplicate message */}
                           {row.errorMsg && (
                             <tr className={
                               row.status === "duplicate" ? "bg-[#FFFBF0]" :
                               row.fuente === "manual" ? "bg-[#F5F3FF]" :
                               "bg-[#FFF8F8]"
                             }>
-                              <td colSpan={8} className="px-4 pb-2 pt-0">
+                              <td colSpan={8} className="px-4 pb-1.5 pt-0">
                                 <p className={`text-[11.5px] ${
                                   row.status === "duplicate" ? "text-[#B7791F]" :
                                   row.fuente === "manual" ? "text-[#7C3AED]" :
                                   "text-[#B23B3B]"
-                                }`}>
-                                  {row.errorMsg}
-                                </p>
+                                }`}>{row.errorMsg}</p>
                               </td>
                             </tr>
                           )}
 
-                          {/* Expanded contact row */}
-                          {expanded.has(row.id) && (
-                            <tr className="bg-[#EFF6FF]/30 border-b border-[#DBEAFE]/60">
+                          {/* Contacto — siempre visible, obligatorio */}
+                          {row.status !== "error" && (
+                            <tr className="bg-[#F8FAFC] border-b border-[#EEF2F7]">
                               <td />
-                              <td colSpan={7} className="px-3 py-3">
+                              <td colSpan={7} className="px-3 py-2">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-[11.5px] text-[#2563EB] font-medium mr-1">Contacto (opcional):</span>
-                                  <input
-                                    type="email"
-                                    placeholder="email@empresa.cl"
-                                    className="h-7 px-2.5 rounded-[6px] text-[12px] border border-[#DBEAFE] bg-white focus:border-[#2563EB] focus:outline-none w-48"
-                                    value={row.emailContacto}
-                                    onChange={(e) => updateRow(row.id, "emailContacto", e.target.value)}
-                                  />
-                                  <input
-                                    type="tel"
-                                    placeholder="+56 9 8765 4321"
-                                    className="h-7 px-2.5 rounded-[6px] text-[12px] border border-[#DBEAFE] bg-white focus:border-[#2563EB] focus:outline-none w-36"
-                                    value={row.telefonoContacto}
-                                    onChange={(e) => updateRow(row.id, "telefonoContacto", e.target.value)}
-                                  />
-                                  <span className="text-[11px] text-[#93C5FD]">Se enviará email de cobranza automático si se ingresa</span>
+                                  <span className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mr-1">
+                                    Contacto<span className="text-[#B23B3B] ml-0.5">*</span>
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                    <input
+                                      type="email"
+                                      placeholder="email@empresa.cl *"
+                                      className={`h-7 px-2.5 rounded-[6px] text-[12px] border bg-white focus:outline-none w-48 ${
+                                        !row.emailContacto.trim() ? "border-[#FECACA] focus:border-[#B23B3B]" : "border-[#E2E8F0] focus:border-[#2563EB]"
+                                      }`}
+                                      value={row.emailContacto}
+                                      onChange={(e) => updateRow(row.id, "emailContacto", e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 .18h3a2 2 0 012 1.72c.12.96.36 1.9.69 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45c.91.33 1.85.57 2.81.69A2 2 0 0122 16.92z"/>
+                                    </svg>
+                                    <input
+                                      type="tel"
+                                      placeholder="+56 9 8765 4321 *"
+                                      className={`h-7 px-2.5 rounded-[6px] text-[12px] border bg-white focus:outline-none w-40 ${
+                                        !row.telefonoContacto.trim() ? "border-[#FECACA] focus:border-[#B23B3B]" : "border-[#E2E8F0] focus:border-[#2563EB]"
+                                      }`}
+                                      value={row.telefonoContacto}
+                                      onChange={(e) => updateRow(row.id, "telefonoContacto", e.target.value)}
+                                    />
+                                  </div>
+                                  <span className="text-[11px] text-[#9CA3AF]">Se envía notificación al deudor automáticamente</span>
                                 </div>
                               </td>
                             </tr>
