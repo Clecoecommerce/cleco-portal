@@ -7,6 +7,7 @@ import type { ScoredFactura, ActionTier } from "@/lib/scoring";
 import { formatCLP, formatDate } from "@/lib/utils";
 import { InvoiceDrawer } from "@/components/ui/InvoiceDrawer";
 import { DebtorDrawer } from "@/components/ui/DebtorDrawer";
+import { DateRangeFilter, EMPTY_DATE_RANGE, inDateRange, type DateRange } from "@/components/ui/DateRangeFilter";
 
 // ── Avatar util ───────────────────────────────────────────────────────────────
 const AV = [["#DBEAFE","#1E40AF"],["#E0E7FF","#3730A3"],["#CFFAFE","#0E7490"],["#FEF3C7","#B7791F"],["#EDE9FE","#5B21B6"]];
@@ -49,6 +50,7 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
   const [debtorRow,  setDebtorRow]  = useState<ScoredFactura | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === "desc" ? "asc" : "desc"));
@@ -76,8 +78,9 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
       || r.deudores?.rut?.toLowerCase().includes(q)
       || r.numero?.toLowerCase().includes(q);
     const matchF = filter === "todas" || r.action === filter;
-    return matchQ && matchF;
-  }), [scored, search, filter]);
+    const matchD = inDateRange(r.fecha_vencimiento, dateRange);
+    return matchQ && matchF && matchD;
+  }), [scored, search, filter, dateRange]);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "desc" ? -1 : 1;
@@ -134,6 +137,8 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
           {search && (
             <button onClick={() => setSearch("")} style={{ fontSize: 12, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>Limpiar</button>
           )}
+          {/* Vencimiento */}
+          <DateRangeFilter value={dateRange} onChange={setDateRange} />
         </div>
 
         {/* Chip rows */}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Badge, estadoToBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatCLP } from "@/lib/utils";
 import { exportCsv } from "@/lib/exportCsv";
+import { DateRangeFilter, EMPTY_DATE_RANGE, inDateRange, type DateRange } from "@/components/ui/DateRangeFilter";
 import type { PagoWithFactura } from "@/types/database";
 
 type Tab = "pagos" | "desembolsos" | "cuenta";
@@ -19,9 +20,15 @@ interface Props {
   cuentaCorriente: string | null;
 }
 
-export function PagosClient({ pagos, recuperadoMes, honorariosTotal, proximoDesembolso, banco, cuentaCorriente }: Props) {
+export function PagosClient({ pagos: allPagos, recuperadoMes, honorariosTotal, proximoDesembolso, banco, cuentaCorriente }: Props) {
   const [tab,  setTab]  = useState<Tab>("pagos");
   const [page, setPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
+
+  const pagos = useMemo(
+    () => allPagos.filter(p => inDateRange(p.fecha, dateRange)),
+    [allPagos, dateRange]
+  );
 
   const totalPages = Math.max(1, Math.ceil(pagos.length / PER_PAGE));
   const paged      = pagos.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -45,7 +52,7 @@ export function PagosClient({ pagos, recuperadoMes, honorariosTotal, proximoDese
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-[14px] shadow-sm overflow-hidden">
       {/* Tabs + export */}
-      <div className="flex items-center justify-between px-4 pt-2 border-b border-[#E2E8F0] no-scrollbar overflow-x-auto">
+      <div className="flex items-center justify-between px-4 pt-2 border-b border-[#E2E8F0] no-scrollbar overflow-x-auto gap-3">
         <div className="flex">
           {TABS.map(t => (
             <button key={t.key} onClick={() => { setTab(t.key); setPage(1); }}
@@ -55,10 +62,15 @@ export function PagosClient({ pagos, recuperadoMes, honorariosTotal, proximoDese
             </button>
           ))}
         </div>
-        <Button variant="secondary" size="sm" onClick={doExport} className="mr-1 shrink-0">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Cartola CSV
-        </Button>
+        <div className="flex items-center gap-3 shrink-0 mb-2">
+          {tab === "pagos" && (
+            <DateRangeFilter value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
+          )}
+          <Button variant="secondary" size="sm" onClick={doExport} className="mr-1 shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Cartola CSV
+          </Button>
+        </div>
       </div>
 
       {/* Tab: Pagos recibidos */}

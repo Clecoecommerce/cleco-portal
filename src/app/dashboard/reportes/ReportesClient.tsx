@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { scoreFacturas, getAction, ACTION_LABELS, ACTION_COLORS } from "@/lib/scoring";
 import type { ActionTier } from "@/lib/scoring";
 import { formatCLP } from "@/lib/utils";
+import { DateRangeFilter, EMPTY_DATE_RANGE, inDateRange, type DateRange } from "@/components/ui/DateRangeFilter";
 
 interface Props { facturas: any[] }
 
@@ -18,7 +19,13 @@ const AGING_BUCKETS = [
 const TIER_ORDER: ActionTier[] = ["contactar_hoy", "recontactar", "escalar", "monitorear", "ceder"];
 
 export function ReportesClient({ facturas: raw }: Props) {
-  const scored = useMemo(() => scoreFacturas(raw), [raw]);
+  const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
+
+  const scoredAll = useMemo(() => scoreFacturas(raw), [raw]);
+  const scored = useMemo(
+    () => scoredAll.filter(r => inDateRange(r.fecha_vencimiento, dateRange)),
+    [scoredAll, dateRange]
+  );
 
   const totalMonto    = scored.reduce((s, r) => s + r.monto, 0);
   const urgentes      = scored.filter(r => r.action === "contactar_hoy");
@@ -55,11 +62,17 @@ export function ReportesClient({ facturas: raw }: Props) {
   return (
     <>
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 11, letterSpacing: ".14em", fontWeight: 700, color: "#2563EB", textTransform: "uppercase", marginBottom: 6 }}>
-          Análisis · Cartera de cobranza
+      <div style={{ marginBottom: 28, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: ".14em", fontWeight: 700, color: "#2563EB", textTransform: "uppercase", marginBottom: 6 }}>
+            Análisis · Cartera de cobranza
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0F172A", margin: 0, lineHeight: 1.1 }}>Reportes</h1>
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0F172A", margin: 0, lineHeight: 1.1 }}>Reportes</h1>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: ".08em", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", marginBottom: 6 }}>Vencimiento</div>
+          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        </div>
       </div>
 
       {empty ? (
@@ -68,7 +81,11 @@ export function ReportesClient({ facturas: raw }: Props) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round"><path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 7"/></svg>
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>Sin datos de reporte</div>
-          <div style={{ fontSize: 13.5, color: "#9CA3AF", maxWidth: 300, margin: "0 auto" }}>Sube facturas en Carga inteligente para generar reportes de tu cartera.</div>
+          <div style={{ fontSize: 13.5, color: "#9CA3AF", maxWidth: 300, margin: "0 auto" }}>
+            {scoredAll.length > 0
+              ? "No hay facturas con vencimiento en el rango de fechas seleccionado."
+              : "Sube facturas en Carga inteligente para generar reportes de tu cartera."}
+          </div>
         </div>
       ) : (<>
 
