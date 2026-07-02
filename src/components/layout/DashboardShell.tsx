@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SmartUploadModal } from "@/components/ui/SmartUploadModal";
@@ -90,17 +91,12 @@ export function DashboardShell({ profile, urgentCount, children }: Props) {
     <>
       {/* Logo + mobile close */}
       <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {/* Logo: HTML text + SVG arrows (matches brand) */}
+        {/* Logo: HTML text + ícono real de la marca (recortado de /logo.png) */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
           <span style={{ fontFamily: "var(--font-hanken),'Hanken Grotesk',system-ui,sans-serif", fontWeight: 700, fontSize: 22, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1 }}>
             cleCo
           </span>
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" style={{ marginTop: 0, flexShrink: 0 }}>
-            {/* back bracket */}
-            <path d="M1 12 L1 4 L9 4" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
-            {/* front bracket */}
-            <path d="M5 16 L5 8 L13 8" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <Image src="/logo-icon-arrow.png" alt="" width={18} height={18} style={{ marginTop: -2, flexShrink: 0 }} />
         </div>
         <button className="lg:hidden" onClick={() => setDrawerOpen(false)}
           style={{ width: 30, height: 30, borderRadius: 7, background: "rgba(255,255,255,.07)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
