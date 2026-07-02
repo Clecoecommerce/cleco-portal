@@ -214,9 +214,9 @@ export function PanelDashboard({ scored, firstName, profileId, profileName = "Eq
             Subir factura
           </button>
           <div style={{ display: "flex", background: "#E2E8F0", borderRadius: 11, padding: 3, gap: 2 }}>
-            <LayoutBtn active={layout === "triage"}    label="Triage"    onClick={() => setLayout("triage")} />
-            <LayoutBtn active={layout === "ejecutivo"} label="Ejecutivo" onClick={() => setLayout("ejecutivo")} />
-            <LayoutBtn active={layout === "compacto"}  label="Compacto"  onClick={() => setLayout("compacto")} />
+            <LayoutBtn active={layout === "triage"}    label="Prioridad" onClick={() => setLayout("triage")} />
+            <LayoutBtn active={layout === "ejecutivo"} label="Resumen"   onClick={() => setLayout("ejecutivo")} />
+            <LayoutBtn active={layout === "compacto"}  label="Lista"     onClick={() => setLayout("compacto")} />
           </div>
         </div>
       </div>
