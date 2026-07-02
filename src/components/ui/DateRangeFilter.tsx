@@ -14,13 +14,13 @@ export function inDateRange(dateIso: string, range: DateRange): boolean {
 }
 
 const inputClass =
-  "h-9 px-3 border border-[#E2E8F0] rounded-[6px] text-[13px] bg-white text-[#0F172A] " +
+  "h-9 px-3 border border-[#E2E8F0] rounded-[6px] text-[13px] bg-white text-[#0F172A] w-[140px] min-w-0 " +
   "focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10";
 
 export function DateRangeFilter({ value, onChange }: { value: DateRange; onChange: (v: DateRange) => void }) {
   const active = value.from || value.to;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5">
       <input type="date" value={value.from} onChange={e => onChange({ ...value, from: e.target.value })} className={inputClass} aria-label="Desde" />
       <span className="text-[12px] text-[#9CA3AF]">a</span>
       <input type="date" value={value.to} onChange={e => onChange({ ...value, to: e.target.value })} className={inputClass} aria-label="Hasta" />

@@ -170,7 +170,7 @@ export function ReportesClient({ facturas: raw }: Props) {
             <div style={{ fontSize: 13, color: "#9CA3AF", textAlign: "center", padding: "24px 0" }}>Sin datos</div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table className="invoice-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #F1F5F9" }}>
                     {["Deudor", "Facturas", "Monto total", "Score máx."].map(h => (
@@ -183,10 +183,10 @@ export function ReportesClient({ facturas: raw }: Props) {
                     const scoreColor = ACTION_COLORS[getAction(d.score)].text;
                     return (
                       <tr key={i} style={{ borderBottom: "1px solid #F8FAFC" }}>
-                        <td style={{ padding: "12px 12px", fontSize: 13.5, fontWeight: 700, color: "#0F172A" }}>{d.name}</td>
-                        <td style={{ padding: "12px 12px", fontSize: 13, color: "#6B7280" }}>{d.count}</td>
-                        <td style={{ padding: "12px 12px", fontSize: 13.5, fontWeight: 800, color: "#0F172A", fontVariantNumeric: "tabular-nums" }}>{formatCLP(d.monto)}</td>
-                        <td style={{ padding: "12px 12px" }}>
+                        <td className="td-debtor" data-label="Deudor" style={{ padding: "12px 12px", fontSize: 13.5, fontWeight: 700, color: "#0F172A" }}>{d.name}</td>
+                        <td data-label="Facturas" style={{ padding: "12px 12px", fontSize: 13, color: "#6B7280" }}>{d.count}</td>
+                        <td data-label="Monto total" style={{ padding: "12px 12px", fontSize: 13.5, fontWeight: 800, color: "#0F172A", fontVariantNumeric: "tabular-nums" }}>{formatCLP(d.monto)}</td>
+                        <td data-label="Score máx." style={{ padding: "12px 12px" }}>
                           <span style={{ fontSize: 15, fontWeight: 800, color: scoreColor }}>{d.score}</span>
                         </td>
                       </tr>

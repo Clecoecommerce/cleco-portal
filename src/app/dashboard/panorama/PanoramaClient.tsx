@@ -189,7 +189,8 @@ export function PanoramaClient({ facturas, pagos, profile }: Props) {
           {activasOrdenadas.length === 0 ? (
             <p className="px-5 py-8 text-center text-[13px] text-[#9CA3AF]">No hay facturas activas.</p>
           ) : (
-            <table className="w-full border-collapse text-[13px]">
+            <div style={{ overflowX: "auto" }}>
+            <table className="invoice-table w-full border-collapse text-[13px]">
               <thead>
                 <tr className="bg-[#FAFBFD]">
                   {["Deudor", "RUT", "N° Factura", "Vencimiento", "Mora", "Monto", "Estado"].map((h, i) => (
@@ -207,17 +208,17 @@ export function PanoramaClient({ facturas, pagos, profile }: Props) {
                   const mora = moraDias(f);
                   return (
                     <tr key={f.id} className="border-b border-[#F1F5F9] last:border-0">
-                      <td className="px-4 py-3 font-medium text-[#0F172A]">{f.deudores?.razon_social ?? "—"}</td>
-                      <td className="px-4 py-3 font-mono text-[12px] text-[#6B7280]">{f.deudores?.rut ?? "—"}</td>
-                      <td className="px-4 py-3 font-mono text-[12px] text-[#1E293B]">N°{f.numero}</td>
-                      <td className="px-4 py-3 text-[#6B7280] tabular-nums">{new Date(f.fecha_vencimiento).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</td>
-                      <td className="px-4 py-3 tabular-nums">
+                      <td className="td-debtor px-4 py-3 font-medium text-[#0F172A]" data-label="Deudor">{f.deudores?.razon_social ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono text-[12px] text-[#6B7280]" data-label="RUT">{f.deudores?.rut ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono text-[12px] text-[#1E293B]" data-label="N° Factura">N°{f.numero}</td>
+                      <td className="px-4 py-3 text-[#6B7280] tabular-nums" data-label="Vencimiento">{new Date(f.fecha_vencimiento).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                      <td className="px-4 py-3 tabular-nums" data-label="Mora">
                         {mora > 0
                           ? <span className={`font-semibold ${mora >= 90 ? "text-[#B23B3B]" : mora >= 30 ? "text-[#B7791F]" : "text-[#6B7280]"}`}>{mora}d</span>
                           : <span className="text-[#9CA3AF]">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-[#0F172A] tabular-nums">{formatCLP(f.monto)}</td>
-                      <td className="px-4 py-3"><Badge variant={variant}>{label}</Badge></td>
+                      <td className="px-4 py-3 text-right font-semibold text-[#0F172A] tabular-nums" data-label="Monto">{formatCLP(f.monto)}</td>
+                      <td className="px-4 py-3" data-label="Estado"><Badge variant={variant}>{label}</Badge></td>
                     </tr>
                   );
                 })}
@@ -225,11 +226,12 @@ export function PanoramaClient({ facturas, pagos, profile }: Props) {
               <tfoot>
                 <tr className="bg-[#FAFBFD] border-t border-[#E2E8F0]">
                   <td colSpan={5} className="px-4 py-3 text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Total cartera activa</td>
-                  <td className="px-4 py-3 text-right font-bold text-[#0F172A] tabular-nums">{formatCLP(montoActivo)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-[#0F172A] tabular-nums" data-label="Total">{formatCLP(montoActivo)}</td>
                   <td />
                 </tr>
               </tfoot>
             </table>
+            </div>
           )}
         </div>
 

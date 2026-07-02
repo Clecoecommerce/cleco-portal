@@ -52,8 +52,8 @@ export function PagosClient({ pagos: allPagos, recuperadoMes, honorariosTotal, p
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-[14px] shadow-sm overflow-hidden">
       {/* Tabs + export */}
-      <div className="flex items-center justify-between px-4 pt-2 border-b border-[#E2E8F0] no-scrollbar overflow-x-auto gap-3">
-        <div className="flex">
+      <div className="flex items-center justify-between flex-wrap gap-3 px-4 pt-2 border-b border-[#E2E8F0]">
+        <div className="flex no-scrollbar overflow-x-auto">
           {TABS.map(t => (
             <button key={t.key} onClick={() => { setTab(t.key); setPage(1); }}
               className={`px-3.5 py-3 text-[13.5px] font-medium border-b-2 mb-[-1px] transition-colors whitespace-nowrap ${t.key === tab ? "text-[#2563EB] border-[#2563EB]" : "text-[#6B7280] border-transparent hover:text-[#1E293B]"}`}>
@@ -62,7 +62,7 @@ export function PagosClient({ pagos: allPagos, recuperadoMes, honorariosTotal, p
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 shrink-0 mb-2">
+        <div className="flex items-center gap-3 flex-wrap mb-2">
           {tab === "pagos" && (
             <DateRangeFilter value={dateRange} onChange={v => { setDateRange(v); setPage(1); }} />
           )}

@@ -124,9 +124,9 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
 
       {/* Filter chips */}
       <div style={{ background: "#FFFFFF", borderRadius: 14, border: "1px solid #E2E8F0", padding: "12px 16px", marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, rowGap: 10, marginBottom: 8, flexWrap: "wrap" }}>
           {/* Search */}
-          <div style={{ position: "relative", flex: 1, maxWidth: 300 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 180, maxWidth: 300 }}>
             <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar deudor, RUT o N°…"
@@ -188,7 +188,7 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
         ) : (
           <div style={{ overflowX: "auto" }}>
             {/* Header row */}
-            <div style={{ display: "grid", gridTemplateColumns: GRID_COLS, gap: 14, padding: "13px 22px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", fontSize: 11, letterSpacing: ".07em", fontWeight: 800, color: "#9CA3AF", textTransform: "uppercase" }}>
+            <div className="grid-list-header" style={{ display: "grid", gridTemplateColumns: GRID_COLS, gap: 14, padding: "13px 22px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", fontSize: 11, letterSpacing: ".07em", fontWeight: 800, color: "#9CA3AF", textTransform: "uppercase" }}>
               <div onClick={() => toggleSort("deudor")} style={{ cursor: "pointer", userSelect: "none" }}>Deudor {sortArrow("deudor")}</div>
               <div>N° / RUT</div>
               <div onClick={() => toggleSort("venc")} style={{ cursor: "pointer", userSelect: "none" }}>Vencimiento {sortArrow("venc")}</div>
@@ -211,6 +211,7 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
 
               return (
                 <div key={r.id}
+                  className="grid-list-row"
                   onClick={() => openInvoice(r)}
                   style={{ display: "grid", gridTemplateColumns: GRID_COLS, gap: 14, alignItems: "center", padding: "13px 22px", borderBottom: "1px solid #F1F5F9", cursor: "pointer", transition: "background .12s" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
@@ -262,7 +263,7 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
                   </div>
 
                   {/* Chevron */}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                  <svg className="grid-list-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </div>
               );
             })}

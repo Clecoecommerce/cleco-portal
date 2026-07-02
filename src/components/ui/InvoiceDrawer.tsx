@@ -29,8 +29,8 @@ function avatarStyle(name: string) {
 function FactorBar({ label, weight, detail, score }: { label: string; weight: number; detail: string; score: number }) {
   const color = factorBarColor(score);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 11 }}>
-      <div style={{ width: 140, flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
+      <div style={{ width: 108, flexShrink: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
           {label} <span style={{ fontWeight: 600, color: "#6B7280", fontSize: 11 }}>{weight}%</span>
         </div>

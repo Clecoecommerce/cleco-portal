@@ -118,7 +118,7 @@ function InvoiceRow({ r, idx, onOpen, compact = false }: { r: ScoredFactura; idx
 
   if (compact) {
     return (
-      <button onClick={() => onOpen(r)} style={{ display: "grid", gridTemplateColumns: "minmax(140px,2fr) 80px 100px 54px minmax(110px,1.3fr)", gap: 10, alignItems: "center", padding: "9px 16px", minWidth: 540, width: "100%", background: "none", border: "none", borderBottom: "1px solid #F1F5F9", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+      <button onClick={() => onOpen(r)} className="grid-list-row" style={{ display: "grid", gridTemplateColumns: "minmax(140px,2fr) 80px 100px 54px minmax(110px,1.3fr)", gap: 10, alignItems: "center", padding: "9px 16px", minWidth: 540, width: "100%", background: "none", border: "none", borderBottom: "1px solid #F1F5F9", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
         onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
         onMouseLeave={e => (e.currentTarget.style.background = "")}>
         <div style={{ minWidth: 0 }}>
@@ -433,7 +433,7 @@ export function PanelDashboard({ scored, firstName, profileId, profileName = "Eq
 
           <Card style={{ overflow: "hidden" }}>
             <div style={{ overflowX: "auto" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(140px,2fr) 80px 100px 54px minmax(110px,1.3fr)", gap: 10, padding: "10px 16px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", fontSize: 10, letterSpacing: ".06em", fontWeight: 800, color: "#9CA3AF", textTransform: "uppercase", minWidth: 540 }}>
+              <div className="grid-list-header" style={{ display: "grid", gridTemplateColumns: "minmax(140px,2fr) 80px 100px 54px minmax(110px,1.3fr)", gap: 10, padding: "10px 16px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", fontSize: 10, letterSpacing: ".06em", fontWeight: 800, color: "#9CA3AF", textTransform: "uppercase", minWidth: 540 }}>
                 <div>Deudor</div><div>Vence</div><div style={{ textAlign: "right" }}>Monto</div><div style={{ textAlign: "center" }}>Score</div><div>Acción</div>
               </div>
               {sorted.length === 0 && (

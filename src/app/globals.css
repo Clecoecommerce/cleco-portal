@@ -100,6 +100,21 @@ body {
   table.invoice-table td.td-debtor::before { display: none; }
 }
 
+/* Div-based grid lists (Bandeja, Panel modo Lista): stack into cards on mobile
+   instead of forcing a cramped horizontal scroll. Each direct child of a
+   .grid-list row becomes its own line. */
+@media (max-width: 700px) {
+  .grid-list-row {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    row-gap: 6px;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+  }
+  .grid-list-row .grid-list-chevron { display: none; }
+  .grid-list-header { display: none; }
+}
+
 /* FAQ details */
 details.faq summary::-webkit-details-marker { display: none; }
 details.faq[open] .chev { transform: rotate(45deg); }
