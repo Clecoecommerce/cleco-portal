@@ -104,6 +104,10 @@ body {
 details.faq summary::-webkit-details-marker { display: none; }
 details.faq[open] .chev { transform: rotate(45deg); }
 
+/* Panel dashboard animations */
+@keyframes ccPulse { 0%, 100% { opacity: 1; } 50% { opacity: .42; } }
+@keyframes ccIn    { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
 /* Modal animations */
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes popIn { from { transform: translateY(8px) scale(.99); opacity: 0 } to { transform: none; opacity: 1 } }

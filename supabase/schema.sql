@@ -27,6 +27,17 @@ create table if not exists public.deudores (
   sector       text,
   mora_dias    int  not null default 0,
   riesgo       text not null default 'bajo' check (riesgo in ('bajo', 'medio', 'alto')),
+  -- Motor de scoring (Portal v2.0): categoría real y confiabilidad numérica del deudor
+  tipo         text not null default 'pyme'
+    check (tipo in ('persona_natural','pyme','inmobiliaria','construccion','institucion','gran_empresa','organismo_publico')),
+  confiabilidad int not null default 50 check (confiabilidad >= 0 and confiabilidad <= 100),
+  giro              text,
+  comuna            text,
+  cargo             text,
+  email_contacto    text,
+  telefono_contacto text,
+  nombre_contacto   text,
+  direccion         text,
   created_at   timestamptz default now() not null,
   unique (profile_id, rut)
 );
@@ -43,6 +54,10 @@ create table if not exists public.facturas (
   estado            text not null default 'en_gestion' check (estado in ('en_gestion', 'pendiente', 'pagada')),
   archivo_url       text,
   notas             text,
+  repactado         boolean not null default false,
+  num_cuotas        int,
+  monto_cuota       bigint,
+  contactos_intentados int not null default 0,
   created_at        timestamptz default now() not null
 );
 

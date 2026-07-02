@@ -11,6 +11,7 @@ import type { Profile } from "@/types/database";
 
 const navItems = [
   { href: "/dashboard",            label: "Panel" },
+  { href: "/dashboard/bandeja",    label: "Bandeja" },
   { href: "/dashboard/deudores",   label: "Deudores" },
   { href: "/dashboard/pagos",      label: "Pagos" },
   { href: "/dashboard/panorama",   label: "Panorama" },

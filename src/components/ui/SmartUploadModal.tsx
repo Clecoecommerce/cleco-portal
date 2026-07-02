@@ -207,6 +207,23 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
     );
   }
 
+  // ── Agregar fila manual ──
+
+  function addManualRow() {
+    const id = `manual-${Date.now()}`;
+    const row: InvoiceRow = {
+      id, fileName: "— ingreso manual —",
+      folio: "", rutDeudor: "", razonSocial: "", monto: "",
+      fechaEmision: "", fechaVencimiento: "",
+      emailContacto: "", telefonoContacto: "",
+      status: "invalid", errorMsg: "Completa los campos para guardar esta factura",
+      include: true, fuente: "manual",
+    };
+    resultsRef.current = [row];
+    setRows([row]);
+    setStage("preview");
+  }
+
   // ── Processing ──
 
   async function processFiles(files: File[]) {
@@ -539,6 +556,27 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     e.target.value = "";
                   }}
                 />
+              </div>
+
+              {/* Manual entry CTA */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC]">
+                <div className="w-9 h-9 rounded-[10px] bg-white border border-[#E2E8F0] inline-flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-[#0F172A]">¿Tienes los datos a mano?</p>
+                  <p className="text-[12px] text-[#6B7280]">Ingresa una factura manualmente sin subir archivo</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); addManualRow(); }}
+                  className="h-8 px-4 rounded-[8px] text-[13px] font-semibold border border-[#E2E8F0] bg-white text-[#1E293B] hover:bg-[#F1F5F9] transition-colors shrink-0"
+                >
+                  Ingresar manual
+                </button>
               </div>
 
               {/* Feature highlights */}
@@ -878,6 +916,26 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                   </table>
                 </div>
               </div>
+
+              {/* Add manual row */}
+              <button
+                onClick={() => {
+                  const id = `manual-${Date.now()}`;
+                  const row: InvoiceRow = {
+                    id, fileName: "— ingreso manual —",
+                    folio: "", rutDeudor: "", razonSocial: "", monto: "",
+                    fechaEmision: "", fechaVencimiento: "",
+                    emailContacto: "", telefonoContacto: "",
+                    status: "invalid", errorMsg: "Completa los campos para guardar esta factura",
+                    include: true, fuente: "manual",
+                  };
+                  setRows(prev => [...prev, row]);
+                }}
+                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#2563EB] hover:underline"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Agregar otra factura manualmente
+              </button>
 
               {/* Download errors link */}
               {(errorCount > 0 || dupCount > 0) && (

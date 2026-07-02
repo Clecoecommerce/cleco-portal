@@ -44,6 +44,15 @@ export interface Profile {
   created_at: string;
 }
 
+export type TipoDeudor =
+  | "persona_natural"
+  | "pyme"
+  | "inmobiliaria"
+  | "construccion"
+  | "institucion"
+  | "gran_empresa"
+  | "organismo_publico";
+
 export interface Deudor {
   id: string;
   profile_id: string;
@@ -52,8 +61,15 @@ export interface Deudor {
   sector: string | null;
   mora_dias: number;
   riesgo: "bajo" | "medio" | "alto";
+  tipo: TipoDeudor;
+  confiabilidad: number;
+  giro: string | null;
+  comuna: string | null;
+  cargo: string | null;
   email_contacto: string | null;
   telefono_contacto: string | null;
+  nombre_contacto: string | null;
+  direccion: string | null;
   created_at: string;
 }
 
@@ -70,6 +86,7 @@ export interface Factura {
   repactado: boolean;
   num_cuotas: number | null;
   monto_cuota: number | null;
+  contactos_intentados: number;
   created_at: string;
 }
 
