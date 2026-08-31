@@ -6,7 +6,7 @@ import { SmartUploadModal } from "@/components/ui/SmartUploadModal";
 
 interface Props { profileId: string }
 
-const FORMATS = ["XML", "PDF", "PNG", "JPG"];
+const FORMATS = ["CSV", "XLSX", "XML", "PDF", "PNG", "JPG"];
 
 export function CargaClient({ profileId }: Props) {
   const router    = useRouter();
@@ -91,7 +91,7 @@ export function CargaClient({ profileId }: Props) {
             userSelect: "none",
           }}>
           <input ref={inputRef} type="file" multiple
-            accept=".xml,.pdf,.png,.jpg,.jpeg"
+            accept=".csv,.xlsx,.xls,.xml,.pdf,.png,.jpg,.jpeg"
             style={{ display: "none" }}
             onChange={e => handleFiles(e.target.files)} />
 
@@ -139,7 +139,7 @@ export function CargaClient({ profileId }: Props) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
             {[
-              { step: "1", title: "Sube facturas", desc: "Arrastra tus archivos XML, PDF o imágenes al área de carga." },
+              { step: "1", title: "Sube facturas", desc: "Una nómina CSV/Excel con todas tus facturas, o archivos XML, PDF e imágenes." },
               { step: "2", title: "Motor analiza", desc: "La IA extrae datos, detecta duplicados y calcula el score de cada factura." },
               { step: "3", title: "Guarda en cartera", desc: "Confirma y las facturas se integran a tu bandeja priorizada." },
             ].map(item => (
@@ -156,6 +156,10 @@ export function CargaClient({ profileId }: Props) {
 
         {/* Supported formats detail */}
         <div style={{ marginTop: 24, padding: "16px 20px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 14, display: "flex", flexWrap: "wrap", gap: 20 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#1E293B", display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            CSV / Excel — nómina completa, una fila por factura
+          </div>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: "#1E293B", display: "flex", alignItems: "center", gap: 6 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             XML SII — extracción automática de todos los campos

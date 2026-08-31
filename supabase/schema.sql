@@ -50,6 +50,7 @@ create table if not exists public.facturas (
   deudor_id         uuid not null references public.deudores(id) on delete cascade,
   numero            text not null,
   monto             bigint not null,
+  fecha_emision     date,
   fecha_vencimiento date not null,
   estado            text not null default 'en_gestion' check (estado in ('en_gestion', 'pendiente', 'pagada')),
   archivo_url       text,
@@ -75,6 +76,36 @@ create table if not exists public.pagos (
   created_at     timestamptz default now() not null
 );
 
+-- 5. GESTIONES
+-- Trazabilidad: cada contacto enviado a un deudor y su estado de entrega
+create table if not exists public.gestiones (
+  id           uuid primary key default gen_random_uuid(),
+  profile_id   uuid not null references public.profiles(id) on delete cascade,
+  deudor_id    uuid not null references public.deudores(id) on delete cascade,
+  -- Nullable: permite gestiones consolidadas que cubren varias facturas
+  factura_id   uuid references public.facturas(id) on delete cascade,
+  canal        text not null check (canal in ('email','whatsapp','sms','llamada','carta')),
+  etapa        text check (etapa in ('preventiva','vencimiento','mora_media','escalacion','manual')),
+  destinatario text,
+  asunto       text,
+  proveedor        text,
+  proveedor_msg_id text,
+  estado       text not null default 'enviado'
+    check (estado in ('enviado','entregado','abierto','click','rebotado','fallido')),
+  error_msg    text,
+  enviado_at   timestamptz not null default now(),
+  entregado_at timestamptz,
+  abierto_at   timestamptz,
+  click_at     timestamptz,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists gestiones_deudor_idx    on public.gestiones (deudor_id, enviado_at desc);
+create index if not exists gestiones_factura_idx   on public.gestiones (factura_id);
+create index if not exists gestiones_profile_idx   on public.gestiones (profile_id, enviado_at desc);
+create index if not exists gestiones_proveedor_idx on public.gestiones (proveedor_msg_id);
+create index if not exists facturas_profile_numero_idx on public.facturas (profile_id, numero);
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- Each client can only see and modify their own data
@@ -84,6 +115,7 @@ alter table public.profiles  enable row level security;
 alter table public.deudores  enable row level security;
 alter table public.facturas  enable row level security;
 alter table public.pagos     enable row level security;
+alter table public.gestiones enable row level security;
 
 -- profiles: user can only read/update their own row
 create policy "profiles_select_own" on public.profiles for select using (id = auth.uid());
@@ -97,6 +129,9 @@ create policy "facturas_all_own" on public.facturas for all using (profile_id = 
 
 -- pagos
 create policy "pagos_select_own" on public.pagos for select using (profile_id = auth.uid());
+
+-- gestiones
+create policy "gestiones_all_own" on public.gestiones for all using (profile_id = auth.uid());
 
 -- ============================================================
 -- TRIGGER: auto-create profile on signup

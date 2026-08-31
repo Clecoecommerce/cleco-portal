@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { validarRUT, formatRUT } from "@/lib/utils";
 import { enviarEmailCobranza } from "@/lib/email";
+import { parsearNomina, plantillaNominaCsv, COLUMNAS_NOMINA } from "@/lib/nomina";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,8 @@ interface ExtractedData {
 
 type RowStatus = "extracting" | "ready" | "duplicate" | "invalid" | "error";
 
+type Fuente = "xml" | "vision" | "pdf" | "ocr" | "manual" | "nomina";
+
 interface InvoiceRow {
   id: string;
   fileName: string;
@@ -32,11 +35,13 @@ interface InvoiceRow {
   fechaVencimiento: string;
   emailContacto: string;
   telefonoContacto: string;
+  /** Estado que viene de la nómina; por defecto en_gestion */
+  estadoPago: string;
   status: RowStatus;
   errorMsg: string;
   duplicateDate?: string;
   include: boolean;
-  fuente?: "xml" | "vision" | "pdf" | "ocr" | "manual";
+  fuente?: Fuente;
 }
 
 interface SavedFolio {
@@ -104,9 +109,31 @@ function downloadErrorCsv(rows: InvoiceRow[]) {
   URL.revokeObjectURL(url);
 }
 
-const ACCEPT = ".xml,.pdf,.png,.jpg,.jpeg";
+function descargarPlantilla() {
+  // BOM para que Excel en Windows respete los acentos
+  const blob = new Blob(["\uFEFF" + plantillaNominaCsv()], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "plantilla_nomina_cleco.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Documentos que se procesan uno a uno (extracción vía API) */
+const EXT_DOCUMENTO = ["xml", "pdf", "png", "jpg", "jpeg"];
+/** Planillas que contienen muchas facturas y se parsean en el navegador */
+const EXT_NOMINA = ["csv", "xlsx", "xlsm", "xls"];
+
+const ACCEPT = ".csv,.xlsx,.xls,.xml,.pdf,.png,.jpg,.jpeg";
 const MAX_FILES = 50;
 const MAX_MB = 10;
+/** Tope de filas por carga: la tabla de revisión y el guardado son fila a fila */
+const MAX_FILAS = 500;
+
+function extension(f: File): string {
+  return f.name.split(".").pop()?.toLowerCase() ?? "";
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -215,7 +242,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
       id, fileName: "— ingreso manual —",
       folio: "", rutDeudor: "", razonSocial: "", monto: "",
       fechaEmision: "", fechaVencimiento: "",
-      emailContacto: "", telefonoContacto: "",
+      emailContacto: "", telefonoContacto: "", estadoPago: "en_gestion",
       status: "invalid", errorMsg: "Completa los campos para guardar esta factura",
       include: true, fuente: "manual",
     };
@@ -226,43 +253,115 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
   // ── Processing ──
 
-  async function processFiles(files: File[]) {
-    const valid = files
-      .filter((f) => {
-        const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-        if (!["xml", "pdf", "png", "jpg", "jpeg"].includes(ext)) return false;
-        if (f.size > MAX_MB * 1024 * 1024) return false;
-        return true;
-      })
-      .slice(0, MAX_FILES);
+  /** Parsea planillas CSV/Excel en el navegador: una fila = una factura. */
+  async function filasDesdeNominas(archivos: File[]): Promise<{ filas: InvoiceRow[]; errores: string[] }> {
+    const filas: InvoiceRow[] = [];
+    const errores: string[] = [];
 
-    if (!valid.length) {
-      setDropError("No hay archivos válidos. Usa .xml, .pdf, .png o .jpg (máx. 10 MB cada uno).");
+    for (const file of archivos) {
+      try {
+        const res = await parsearNomina(file);
+
+        if (res.faltantes.length > 0) {
+          errores.push(
+            `${file.name}: faltan las columnas ${res.faltantes.join(", ")}. Descarga la plantilla para ver el formato esperado.`
+          );
+          continue;
+        }
+        if (res.filas.length === 0) {
+          errores.push(`${file.name}: no tiene filas de datos bajo la cabecera.`);
+          continue;
+        }
+
+        for (const f of res.filas) {
+          filas.push({
+            id: `n-${file.name}-${f.fila}`,
+            fileName: `${file.name} · fila ${f.fila}`,
+            folio: f.folio,
+            // normalizarRut ya devuelve 12.345.678-9
+            rutDeudor: f.rutDeudor,
+            razonSocial: f.razonSocialDeudor,
+            monto: f.monto,
+            fechaEmision: f.fechaEmision,
+            fechaVencimiento: f.fechaVencimiento,
+            emailContacto: f.emailContacto,
+            telefonoContacto: f.telefonoContacto,
+            estadoPago: f.estadoPago,
+            status: "ready", errorMsg: "", include: true, fuente: "nomina",
+          });
+        }
+      } catch {
+        errores.push(`${file.name}: no se pudo leer el archivo (¿está corrupto o protegido?).`);
+      }
+    }
+
+    return { filas, errores };
+  }
+
+  async function processFiles(files: File[]) {
+    const valid = files.filter((f) => {
+      const ext = extension(f);
+      if (![...EXT_DOCUMENTO, ...EXT_NOMINA].includes(ext)) return false;
+      if (f.size > MAX_MB * 1024 * 1024) return false;
+      return true;
+    });
+
+    const nominas = valid.filter((f) => EXT_NOMINA.includes(extension(f)));
+    const documentos = valid.filter((f) => EXT_DOCUMENTO.includes(extension(f))).slice(0, MAX_FILES);
+
+    if (!nominas.length && !documentos.length) {
+      setDropError(
+        "No hay archivos válidos. Usa .csv, .xlsx (nómina) o .xml, .pdf, .png, .jpg (facturas individuales). Máx. 10 MB cada uno."
+      );
       return;
     }
-    if (files.length > valid.length && files.length <= MAX_FILES + 5) {
-      setDropError(
-        `${files.length - valid.length} archivo(s) ignorados por formato o tamaño incorrecto.`
-      );
+
+    const avisos: string[] = [];
+    if (files.length > valid.length) {
+      avisos.push(`${files.length - valid.length} archivo(s) ignorados por formato o tamaño.`);
     }
 
-    const initial: InvoiceRow[] = valid.map((f, i) => ({
+    setDropError("");
+    setStage("processing");
+
+    // ── 1. Nóminas: parseo local, instantáneo ──
+    const { filas: filasNomina, errores: erroresNomina } = await filasDesdeNominas(nominas);
+    avisos.push(...erroresNomina);
+
+    let base = filasNomina;
+    if (base.length > MAX_FILAS) {
+      avisos.push(
+        `La nómina trae ${base.length} filas; se cargarán las primeras ${MAX_FILAS}. Divide el archivo para subir el resto.`
+      );
+      base = base.slice(0, MAX_FILAS);
+    }
+
+    if (!documentos.length && !base.length) {
+      // Nada que revisar: volvemos al drop con el detalle del problema
+      setDropError(avisos.join(" ") || "No se pudo extraer ninguna factura.");
+      setStage("drop");
+      return;
+    }
+
+    // ── 2. Documentos: extracción vía API, uno por archivo ──
+    const offset = base.length;
+    const initialDocs: InvoiceRow[] = documentos.map((f, i) => ({
       id: `r-${i}-${f.name}-${Date.now()}`,
       fileName: f.name,
       folio: "", rutDeudor: "", razonSocial: "", monto: "",
       fechaEmision: "", fechaVencimiento: "",
-      emailContacto: "", telefonoContacto: "",
+      emailContacto: "", telefonoContacto: "", estadoPago: "en_gestion",
       status: "extracting", errorMsg: "", include: true,
     }));
 
-    resultsRef.current = [...initial];
-    setRows([...initial]);
-    setTotalCount(valid.length);
+    resultsRef.current = [...base, ...initialDocs];
+    setRows([...resultsRef.current]);
+    setTotalCount(documentos.length);
     setProcessedCount(0);
-    setStage("processing");
 
     await Promise.all(
-      valid.map(async (file, i) => {
+      documentos.map(async (file, i) => {
+        const idx = offset + i;
         const fd = new FormData();
         fd.append("files", file);
 
@@ -272,8 +371,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
           const result = json.results?.[0];
 
           if (!result || result.status === "error") {
-            resultsRef.current[i] = {
-              ...resultsRef.current[i],
+            resultsRef.current[idx] = {
+              ...resultsRef.current[idx],
               status: "error",
               errorMsg: result?.error ?? "Error de procesamiento",
               include: false,
@@ -281,8 +380,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
           } else {
             const d: ExtractedData = result.datos;
             const esManual = d.fuente === "manual";
-            resultsRef.current[i] = {
-              ...resultsRef.current[i],
+            resultsRef.current[idx] = {
+              ...resultsRef.current[idx],
               folio: d.folio ?? "",
               rutDeudor: d.rutDeudor ?? "",
               razonSocial: d.razonSocialDeudor ?? "",
@@ -298,8 +397,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
             };
           }
         } catch {
-          resultsRef.current[i] = {
-            ...resultsRef.current[i],
+          resultsRef.current[idx] = {
+            ...resultsRef.current[idx],
             status: "error",
             errorMsg: "Error de red al procesar el archivo",
             include: false,
@@ -326,6 +425,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
         .in("numero", readyFolios);
 
       const dupMap = new Map(existing?.map((f) => [f.numero, f.created_at]) ?? []);
+      // Folios repetidos dentro de la misma carga (frecuente en nóminas)
+      const vistos = new Set<string>();
 
       for (let i = 0; i < current.length; i++) {
         if (current[i].status !== "ready") continue;
@@ -343,6 +444,15 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
             errorMsg: `Factura ${current[i].folio} ya fue cargada el ${dupDate}. Se omitirá.`,
             include: false,
           };
+        } else if (vistos.has(current[i].folio)) {
+          current[i] = {
+            ...current[i],
+            status: "duplicate",
+            errorMsg: `Folio ${current[i].folio} repetido en este mismo archivo. Se omitirá.`,
+            include: false,
+          };
+        } else {
+          vistos.add(current[i].folio);
         }
       }
     }
@@ -357,6 +467,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
     resultsRef.current = current;
     setRows([...current]);
+    setDropError(avisos.join(" "));
     setStage("preview");
   }
 
@@ -405,13 +516,17 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
         if (dErr || !deudor) throw new Error("No se pudo registrar el deudor");
 
         const monto = parseInt(row.monto, 10);
+        const estado = row.estadoPago || "en_gestion";
         const { error: fErr } = await sb.from("facturas").insert({
           profile_id: profileId,
           deudor_id: deudor.id,
           numero: row.folio,
           monto,
+          // Sin fecha de emisión no se puede calcular DSO; nullable porque
+          // las imágenes/PDF no siempre la traen legible.
+          fecha_emision: row.fechaEmision || null,
           fecha_vencimiento: row.fechaVencimiento,
-          estado: "en_gestion",
+          estado,
           archivo_url: null,
           notas: null,
           repactado: false,
@@ -426,7 +541,8 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
         savedFolios.push({ folio_sii: row.folio, folio_cleco: folioCleco, razon_social: row.razonSocial });
         saved++;
 
-        if (row.emailContacto) {
+        // No se cobra una factura que la nómina ya marca como pagada
+        if (row.emailContacto && estado !== "pagada") {
           enviarEmailCobranza({
             profileId,
             emailDeudor: row.emailContacto,
@@ -478,7 +594,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
               <h2 className="text-[18px] font-semibold text-[#0F172A] tracking-tight">Carga Inteligente de Facturas</h2>
             </div>
             <p className="text-[12.5px] text-[#6B7280] mt-0.5 ml-9.5">
-              {stage === "drop" && "XML del SII · PDF · Imágenes — extracción automática de datos"}
+              {stage === "drop" && "Nómina CSV/Excel · XML del SII · PDF · Imágenes"}
               {stage === "processing" && `Procesando ${processedCount} de ${totalCount} archivos…`}
               {stage === "preview" && `${rows.length} archivo${rows.length !== 1 ? "s" : ""} procesados · ${readyCount} listo${readyCount !== 1 ? "s" : ""} para guardar`}
               {stage === "saving" && "Guardando facturas en la base de datos…"}
@@ -530,10 +646,11 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
                 </div>
-                <p className="text-[15px] font-semibold text-[#0F172A] mb-1">Arrastra tus facturas aquí</p>
+                <p className="text-[15px] font-semibold text-[#0F172A] mb-1">Arrastra tu nómina o tus facturas aquí</p>
                 <p className="text-[13px] text-[#6B7280] mb-5">o haz clic para seleccionar archivos de tu equipo</p>
                 <div className="flex flex-wrap justify-center gap-2 mb-4">
                   {[
+                    { label: "CSV / Excel", desc: "Nómina completa", color: "bg-[#FEF3C7] text-[#B7791F]" },
                     { label: "XML del SII", desc: "Extracción al instante", color: "bg-[#E5F4EC] text-[#1F7A4D]" },
                     { label: "PDF", desc: "Vía Claude Vision", color: "bg-[#EFF6FF] text-[#2563EB]" },
                     { label: "PNG / JPG", desc: "Foto de factura", color: "bg-[#F3F0FF] text-[#7C3AED]" },
@@ -543,7 +660,9 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     </span>
                   ))}
                 </div>
-                <p className="text-[11.5px] text-[#9CA3AF]">Máx. {MAX_FILES} archivos · {MAX_MB} MB por archivo</p>
+                <p className="text-[11.5px] text-[#9CA3AF]">
+                  Máx. {MAX_FILES} archivos · {MAX_MB} MB c/u · hasta {MAX_FILAS} filas por nómina
+                </p>
                 <input
                   ref={fileRef}
                   type="file"
@@ -556,6 +675,43 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     e.target.value = "";
                   }}
                 />
+              </div>
+
+              {/* Plantilla de nómina */}
+              <div className="px-4 py-3 rounded-[12px] border border-[#F6C366]/40 bg-[#FFFBF0]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-[10px] bg-white border border-[#F6C366]/40 inline-flex items-center justify-center shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B7791F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#0F172A]">¿Vas a subir muchas facturas?</p>
+                    <p className="text-[12px] text-[#6B7280]">
+                      Exporta la nómina desde tu ERP en CSV o Excel — una fila por factura
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); descargarPlantilla(); }}
+                    className="h-8 px-4 rounded-[8px] text-[13px] font-semibold border border-[#F6C366]/60 bg-white text-[#B7791F] hover:bg-[#FEF3C7] transition-colors shrink-0"
+                  >
+                    Descargar plantilla
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#F6C366]/25">
+                  {COLUMNAS_NOMINA.map((c) => (
+                    <span key={c} className="px-2 py-0.5 rounded-[5px] bg-white border border-[#F1F5F9] font-mono text-[10.5px] text-[#6B7280]">
+                      {c}
+                      {c === "estado_pago" && <span className="text-[#9CA3AF]"> (opcional)</span>}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-[#9CA3AF] mt-2">
+                  Reconocemos variantes de nombre (&quot;Razón Social&quot;, &quot;Folio&quot;, &quot;Monto Total&quot;…), fechas dd/mm/aaaa y montos con puntos.
+                </p>
               </div>
 
               {/* Manual entry CTA */}
@@ -630,8 +786,10 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
             <div className="p-6 space-y-5">
               <div className="space-y-2">
                 <div className="flex justify-between text-[12.5px] text-[#6B7280]">
-                  <span>Analizando archivos con Claude Vision…</span>
-                  <span className="font-semibold text-[#0F172A]">{processedCount} / {totalCount}</span>
+                  <span>{totalCount === 0 ? "Leyendo la nómina…" : "Analizando archivos con Claude Vision…"}</span>
+                  {totalCount > 0 && (
+                    <span className="font-semibold text-[#0F172A]">{processedCount} / {totalCount}</span>
+                  )}
                 </div>
                 <div className="h-2.5 bg-[#F1F5F9] rounded-full overflow-hidden">
                   <div
@@ -672,7 +830,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     <span className="flex-1 font-mono text-[11.5px] text-[#475569] truncate">{row.fileName}</span>
                     {row.status === "ready" && (
                       <span className="text-[#1F7A4D] text-[12px] shrink-0 max-w-[200px] truncate">
-                        {row.fuente === "xml" ? "✓ XML" : "✓ Visión"} · {row.razonSocial || `Folio ${row.folio}`}
+                        {row.fuente === "xml" ? "✓ XML" : row.fuente === "nomina" ? "✓ Nómina" : "✓ Visión"} · {row.razonSocial || `Folio ${row.folio}`}
                       </span>
                     )}
                     {row.status === "error" && (
@@ -689,6 +847,12 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
           {/* ── PREVIEW TABLE ── */}
           {stage === "preview" && (
             <div className="p-4 space-y-3">
+              {dropError && (
+                <div className="px-4 py-3 rounded-[10px] bg-[#FBF3E1] border border-[#F6C366]/40 text-[#B7791F] text-[12.5px]">
+                  {dropError}
+                </div>
+              )}
+
               {/* Summary chips */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-[#E5F4EC] text-[#1F7A4D] text-[12.5px] font-medium">
@@ -729,7 +893,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                             className="w-3.5 h-3.5 rounded border-[#CBD5E1] accent-[#2563EB]"
                           />
                         </th>
-                        {["Folio SII", "Razón Social", "RUT Deudor", "Monto CLP", "Vencimiento", "Estado"].map((h) => (
+                        {["Folio SII", "Razón Social", "RUT Deudor", "Monto CLP", "Emisión", "Vencimiento", "Estado"].map((h) => (
                           <th key={h} className="px-3 py-3 text-left font-semibold text-[#6B7280] whitespace-nowrap text-[11.5px] uppercase tracking-wide">
                             {h}
                           </th>
@@ -828,6 +992,20 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                               )}
                             </td>
 
+                            {/* Emisión */}
+                            <td className="px-2 py-2">
+                              {row.status === "error" ? (
+                                <span className="text-[#9CA3AF] px-1">—</span>
+                              ) : (
+                                <input
+                                  type="date"
+                                  className="h-7 px-2 rounded-[6px] text-[12px] bg-transparent border border-transparent hover:border-[#E2E8F0] focus:border-[#2563EB] focus:bg-white focus:outline-none transition-colors"
+                                  value={row.fechaEmision}
+                                  onChange={(e) => updateRow(row.id, "fechaEmision", e.target.value)}
+                                />
+                              )}
+                            </td>
+
                             {/* Vencimiento */}
                             <td className="px-2 py-2">
                               {row.status === "error" ? (
@@ -858,7 +1036,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                               row.fuente === "manual" ? "bg-[#F5F3FF]" :
                               "bg-[#FFF8F8]"
                             }>
-                              <td colSpan={8} className="px-4 pb-1.5 pt-0">
+                              <td colSpan={9} className="px-4 pb-1.5 pt-0">
                                 <p className={`text-[11.5px] ${
                                   row.status === "duplicate" ? "text-[#B7791F]" :
                                   row.fuente === "manual" ? "text-[#7C3AED]" :
@@ -872,7 +1050,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                           {row.status !== "error" && (
                             <tr className="bg-[#F8FAFC] border-b border-[#EEF2F7]">
                               <td />
-                              <td colSpan={7} className="px-3 py-2">
+                              <td colSpan={8} className="px-3 py-2">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mr-1">
                                     Contacto<span className="text-[#B23B3B] ml-0.5">*</span>
@@ -925,7 +1103,7 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                     id, fileName: "— ingreso manual —",
                     folio: "", rutDeudor: "", razonSocial: "", monto: "",
                     fechaEmision: "", fechaVencimiento: "",
-                    emailContacto: "", telefonoContacto: "",
+                    emailContacto: "", telefonoContacto: "", estadoPago: "en_gestion",
                     status: "invalid", errorMsg: "Completa los campos para guardar esta factura",
                     include: true, fuente: "manual",
                   };
