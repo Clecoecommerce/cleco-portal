@@ -253,12 +253,18 @@ export async function parsearNomina(file: File): Promise<ResultadoNomina> {
   return { filas, faltantes: [], noReconocidas, totalFilas: filas.length };
 }
 
-/** CSV de ejemplo que el cliente descarga para saber qué formato usar. */
+/**
+ * CSV de ejemplo que el cliente descarga para saber qué formato usar.
+ *
+ * Los RUT de ejemplo tienen que pasar validarRUT(): el cliente descarga esta
+ * plantilla, la sube tal cual para probar, y si el dígito verificador está mal
+ * ve "RUT inválido" y cree que el sistema está roto. Hay un test que lo cubre.
+ */
 export function plantillaNominaCsv(): string {
   const cabecera = COLUMNAS_NOMINA.join(",");
   const ejemplos = [
-    "76.543.210-K,Constructora Norte S.A.,pagos@constructoranorte.cl,+56912345678,15734399,2026-06-01,2026-07-01,4200000,pendiente",
-    "77.123.456-7,Distribuidora El Volcán Ltda.,finanzas@elvolcan.cl,+56987654321,15734400,2026-06-15,2026-07-15,1850000,pendiente",
+    "76.543.210-3,Constructora Norte S.A.,pagos@constructoranorte.cl,+56912345678,15734399,2026-06-01,2026-07-01,4200000,pendiente",
+    "77.123.456-9,Distribuidora El Volcán Ltda.,finanzas@elvolcan.cl,+56987654321,15734400,2026-06-15,2026-07-15,1850000,pendiente",
   ];
   return [cabecera, ...ejemplos].join("\n");
 }
