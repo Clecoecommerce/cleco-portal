@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: Props) {
             Ingresa a tu cuenta
           </h1>
           <p className="text-[14.5px] text-[#6B7280] mb-9">
-            Gestiona tus facturas en cobranza y revisa el estado de tus recuperos.
+            Gestiona tu cartera, automatiza los recordatorios y sigue cada pago en un solo lugar.
           </p>
 
           {error && (
@@ -69,12 +69,11 @@ export default async function LoginPage({ searchParams }: Props) {
               />
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
-                <input type="checkbox" className="accent-[#2563EB]" />
-                Recordarme
-              </label>
-              <a href="#" className="text-[13px] text-[#2563EB] hover:text-[#1d4ed8] hover:underline">
+            <div className="flex justify-end pt-1">
+              <a
+                href="mailto:contacto@cleco.cl?subject=Recuperar%20acceso%20al%20portal"
+                className="text-[13px] text-[#2563EB] hover:text-[#1d4ed8] hover:underline"
+              >
                 ¿Olvidaste tu contraseña?
               </a>
             </div>
@@ -111,7 +110,12 @@ export default async function LoginPage({ searchParams }: Props) {
 
           <p className="mt-5 text-center text-[13px] text-[#6B7280]">
             ¿Aún no tienes cuenta?{" "}
-            <a href="#" className="text-[#2563EB] hover:underline">Solicita acceso</a>
+            <a
+              href="mailto:contacto@cleco.cl?subject=Quiero%20acceso%20a%20Cleco"
+              className="text-[#2563EB] hover:underline"
+            >
+              Solicita acceso
+            </a>
           </p>
         </div>
 
@@ -119,9 +123,8 @@ export default async function LoginPage({ searchParams }: Props) {
         <footer className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-[12px] text-[#6B7280] gap-2">
           <span>© 2026 Cleco SpA · Santiago, Chile</span>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-[#2563EB]">Términos</a>
-            <a href="#" className="hover:text-[#2563EB]">Privacidad</a>
-            <a href="#" className="hover:text-[#2563EB]">Soporte</a>
+            <Link href="/nosotros" className="hover:text-[#2563EB]">Nosotros</Link>
+            <a href="mailto:contacto@cleco.cl" className="hover:text-[#2563EB]">Soporte</a>
           </div>
         </footer>
       </div>
@@ -144,16 +147,15 @@ export default async function LoginPage({ searchParams }: Props) {
         </p>
 
         <blockquote className="relative text-[26px] font-medium leading-[1.3] tracking-tight max-w-[460px]">
-          Recuperamos tus facturas impagas con un proceso transparente, jurídico y respetuoso.{" "}
+          Cobra antes de que la factura se convierta en un problema.{" "}
           <span className="text-[#6E89B0]">
-            Tú haces tu negocio. Nosotros nos hacemos cargo de cobrar.
+            Recordatorios automáticos, tu cartera a la vista y alertas tempranas de riesgo.
           </span>
         </blockquote>
 
-        <div className="relative flex items-center justify-between text-[12px] font-mono text-[#8DA3C2]">
-          <span>SII · DTE · Ley 21.131</span>
-          <span className="border border-white/12 rounded-full px-2.5 py-1">v 4.2 · 2026</span>
-        </div>
+        <p className="relative text-[12px] font-mono text-[#8DA3C2]">
+          SII · DTE · Ley 21.131
+        </p>
       </aside>
     </main>
   );

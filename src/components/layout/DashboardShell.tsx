@@ -38,6 +38,11 @@ const DeudoresIcon = () => (
     <path d="M16 5.2a3.2 3.2 0 0 1 0 6M18 20a5.5 5.5 0 0 0-3-4.9"/>
   </svg>
 );
+const PagosIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/>
+  </svg>
+);
 const ReportesIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 3v18h18"/><polyline points="7 14 11 10 15 13 21 7"/>
@@ -49,6 +54,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/bandeja":    "Bandeja de cobranza",
   "/dashboard/carga":      "Carga inteligente",
   "/dashboard/deudores":   "Deudores",
+  "/dashboard/pagos":      "Pagos y liquidaciones",
   "/dashboard/reportes":   "Reportes",
 };
 
@@ -75,6 +81,7 @@ export function DashboardShell({ profile, urgentCount, children }: Props) {
     { href: "/dashboard/bandeja",  label: "Bandeja de cobranza", icon: <BandejaIcon />,  badge: urgentCount > 0 ? urgentCount : undefined },
     { href: "/dashboard/carga",    label: "Carga inteligente",   icon: <CargaIcon /> },
     { href: "/dashboard/deudores", label: "Deudores",            icon: <DeudoresIcon /> },
+    { href: "/dashboard/pagos",    label: "Pagos",               icon: <PagosIcon /> },
     { href: "/dashboard/reportes", label: "Reportes",            icon: <ReportesIcon /> },
   ];
 

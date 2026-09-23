@@ -7,6 +7,7 @@ import type { ScoredFactura, ActionTier } from "@/lib/scoring";
 import { ACTION_LABELS, ACTION_COLORS } from "@/lib/scoring";
 import { formatCLP } from "@/lib/utils";
 import { SmartUploadModal } from "@/components/ui/SmartUploadModal";
+import { CargarDocumentosModal } from "@/components/ui/CargarDocumentosModal";
 import { InvoiceDrawer } from "@/components/ui/InvoiceDrawer";
 import { DebtorDrawer } from "@/components/ui/DebtorDrawer";
 
@@ -161,6 +162,7 @@ function InvoiceRow({ r, idx, onOpen, compact = false }: { r: ScoredFactura; idx
 export function PanelDashboard({ scored, firstName, profileId, profileName = "Equipo de Cobranza" }: Props) {
   const [layout, setLayout]         = useState<Layout>("triage");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [archivoOpen, setArchivoOpen] = useState(false);
   const [invoiceRow, setInvoiceRow] = useState<ScoredFactura | null>(null);
   const [debtorRow,  setDebtorRow]  = useState<ScoredFactura | null>(null);
   const router = useRouter();
@@ -186,9 +188,15 @@ export function PanelDashboard({ scored, firstName, profileId, profileName = "Eq
       )}
 
       {uploadOpen && (
-        <SmartUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} profileId={profileId}
+        <CargarDocumentosModal open={uploadOpen} onClose={() => setUploadOpen(false)} profileId={profileId}
+          onCreated={() => router.refresh()}
+          onCargaMasiva={() => { setUploadOpen(false); setArchivoOpen(true); }} />
+      )}
+
+      {archivoOpen && (
+        <SmartUploadModal open={archivoOpen} onClose={() => setArchivoOpen(false)} profileId={profileId}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onCreated={(() => { setUploadOpen(false); router.refresh(); }) as any} />
+          onCreated={(() => { setArchivoOpen(false); router.refresh(); }) as any} />
       )}
 
       {/* ── Page header ── */}
@@ -211,7 +219,7 @@ export function PanelDashboard({ scored, firstName, profileId, profileName = "Eq
             className="flex items-center gap-2 h-10 px-4 rounded-xl font-bold text-white text-sm cursor-pointer border-0"
             style={{ background: "#2563EB", fontFamily: "inherit", boxShadow: "0 4px 12px -3px rgba(37,99,235,.45)", whiteSpace: "nowrap" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            Subir factura
+            Cargar facturas
           </button>
           <div style={{ display: "flex", background: "#E2E8F0", borderRadius: 11, padding: 3, gap: 2 }}>
             <LayoutBtn active={layout === "triage"}    label="Prioridad" onClick={() => setLayout("triage")} />

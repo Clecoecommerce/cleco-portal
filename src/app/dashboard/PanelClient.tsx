@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Badge, estadoToBadge } from "@/components/ui/Badge";
 import { Button, IconButton } from "@/components/ui/Button";
-import { UploadModal } from "@/components/ui/UploadModal";
-import { BulkUploadModal } from "@/components/ui/BulkUploadModal";
+import { CargarDocumentosModal } from "@/components/ui/CargarDocumentosModal";
 import { SmartUploadModal } from "@/components/ui/SmartUploadModal";
+import { EditInvoiceModal } from "@/components/ui/EditInvoiceModal";
 import { formatCLP, calcularEstado } from "@/lib/utils";
 import { exportCsv } from "@/lib/exportCsv";
 import { createClient } from "@/lib/supabase/client";
@@ -249,82 +249,6 @@ function DetailPanel({ f, onClose }: { f: FacturaWithDeudor; onClose: () => void
   );
 }
 
-/* ── Edit modal ── */
-function EditModal({ factura, onClose, onSaved }: { factura: FacturaWithDeudor; onClose: () => void; onSaved: (updated: Partial<FacturaWithDeudor>) => void }) {
-  const [monto,    setMonto]    = useState(String(factura.monto));
-  const [numero,   setNumero]   = useState(factura.numero);
-  const [fecha,    setFecha]    = useState(factura.fecha_vencimiento);
-  const [notas,    setNotas]    = useState(factura.notas ?? "");
-  const [loading,  setLoading]  = useState(false);
-  const [err,      setErr]      = useState("");
-
-  async function save() {
-    const montoNum = parseInt(monto.replace(/\D/g, "") || "0", 10);
-    if (montoNum <= 0) { setErr("El monto debe ser mayor a $0"); return; }
-    if (!numero.trim()) { setErr("El número de factura es obligatorio"); return; }
-    if (!fecha) { setErr("La fecha de vencimiento es obligatoria"); return; }
-    setLoading(true);
-    const sb = createClient();
-    const { error } = await sb.from("facturas").update({ monto: montoNum, numero: numero.trim(), fecha_vencimiento: fecha, notas: notas.trim() || null }).eq("id", factura.id);
-    setLoading(false);
-    if (error) { setErr("Error al guardar: " + error.message); return; }
-    onSaved({ id: factura.id, monto: montoNum, numero: numero.trim(), fecha_vencimiento: fecha, notas: notas.trim() || null });
-  }
-
-  const iCls = "w-full h-10 px-3.5 border border-[#E2E8F0] rounded-[10px] text-[14px] text-[#0F172A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all";
-
-  return (
-    <div className="fixed inset-0 bg-[#0F172A]/45 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-6" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-lg">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#F1F5F9]">
-          <div>
-            <h2 className="text-[17px] font-semibold text-[#0F172A]">Editar factura</h2>
-            <p className="text-[12.5px] text-[#6B7280] mt-0.5">N° {factura.numero} · {factura.deudores?.razon_social}</p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] inline-flex items-center justify-center">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          {err && <div className="px-4 py-3 rounded-[10px] bg-[#FBE9E9] text-[#B23B3B] text-[13px]">{err}</div>}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">N° de factura</label>
-              <input value={numero} onChange={e => setNumero(e.target.value)} className={iCls} required />
-            </div>
-            <div>
-              <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Vencimiento</label>
-              <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className={iCls} required />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Monto total (CLP)</label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] text-sm">$</span>
-              <input
-                value={parseInt(monto.replace(/\D/g, "") || "0").toLocaleString("es-CL")}
-                onChange={e => setMonto(e.target.value.replace(/\D/g, ""))}
-                className={`${iCls} pl-7`} required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[12.5px] font-medium text-[#1E293B] mb-1.5">Notas internas</label>
-            <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} placeholder="Opcional…"
-              className="w-full px-3.5 py-3 border border-[#E2E8F0] rounded-[10px] text-[14px] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/12 transition-all resize-none" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#F1F5F9]">
-          <button onClick={onClose} className="h-9 px-4 text-[13.5px] font-medium text-[#1E293B] border border-[#E2E8F0] rounded-[8px] hover:bg-[#F1F5F9] transition-all">Cancelar</button>
-          <button onClick={save} disabled={loading} className="h-9 px-4 text-[13.5px] font-medium text-white bg-[#2563EB] hover:bg-[#1d4ed8] rounded-[8px] disabled:opacity-60 transition-all">
-            {loading ? "Guardando…" : "Guardar cambios"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Row({ label, value, bold, mono }: { label: string; value: string; bold?: boolean; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3 border-b border-[#F1F5F9] last:border-0">
@@ -484,7 +408,6 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
   const [detail,       setDetail]       = useState<FacturaWithDeudor | null>(null);
   const [editFactura,    setEditFactura]    = useState<FacturaWithDeudor | null>(null);
   const [confirmarPago,  setConfirmarPago]  = useState<FacturaWithDeudor | null>(null);
-  const [bulkModal,      setBulkModal]      = useState(false);
   const [smartModal,     setSmartModal]     = useState(false);
   const [sortField,    setSortField]    = useState<SortField>(null);
   const [sortDir,      setSortDir]      = useState<SortDir>("asc");
@@ -569,10 +492,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
           }}
         />
       )}
-      {bulkModal && <BulkUploadModal open={bulkModal} onClose={() => { setBulkModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
       {smartModal && <SmartUploadModal open={smartModal} onClose={() => { setSmartModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
-      {modal && <UploadModal open={modal} onClose={() => { setModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} />}
-      {editFactura && <EditModal factura={editFactura} onClose={() => setEditFactura(null)} onSaved={(updated) => { setFacturas(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f)); setEditFactura(null); }} />}
+      {modal && <CargarDocumentosModal open={modal} onClose={() => { setModal(false); refetchFacturas(); }} profileId={profileId} onCreated={refetchFacturas} onCargaMasiva={() => { setModal(false); setSmartModal(true); }} />}
+      {editFactura && <EditInvoiceModal factura={editFactura} onClose={() => setEditFactura(null)} onSaved={(cambios) => { setFacturas(prev => prev.map(f => f.id === editFactura.id ? { ...f, ...cambios } : f)); setEditFactura(null); }} />}
       {detail && <DetailPanel f={detail} onClose={() => setDetail(null)} />}
 
       <div className="bg-white border border-[#E2E8F0] rounded-[14px] shadow-sm overflow-hidden">
@@ -619,13 +541,9 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
                 <IconButton title="Exportar CSV" onClick={doExport}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </IconButton>
-                <Button size="sm" variant="secondary" onClick={() => setSmartModal(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                  Carga inteligente
-                </Button>
                 <Button size="sm" variant="primary" onClick={() => setModal(true)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Subir factura
+                  Cargar facturas
                 </Button>
               </div>
             </div>
@@ -637,6 +555,14 @@ export function PanelClient({ facturas: initial, profileId }: { facturas: Factur
                 </div>
                 <h3 className="text-[15px] font-semibold text-[#0F172A] mb-1">{search || estado !== "todos" ? "Sin resultados" : tab === "facturas" ? "Sin facturas activas" : "Sin historial"}</h3>
                 <p className="text-[13px] max-w-xs mx-auto">{search || estado !== "todos" ? "Prueba con otro filtro." : tab === "facturas" ? "Sube tu primera factura para iniciar la gestión." : "Las facturas pagadas aparecerán aquí."}</p>
+                {!search && estado === "todos" && tab === "facturas" && (
+                  <div className="mt-5">
+                    <Button size="sm" variant="primary" onClick={() => setModal(true)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Cargar facturas
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <table className="invoice-table w-full border-collapse text-[13.5px]">
