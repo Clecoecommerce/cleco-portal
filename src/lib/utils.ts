@@ -60,3 +60,16 @@ export function getInitials(name: string): string {
     .join("")
     .toUpperCase();
 }
+
+/**
+ * Mora promedio ponderada por monto.
+ *
+ * La media simple trata igual una factura de $50.000 a 300 días que una de
+ * $5.000.000 a 30 días, y termina reportando un número que no refleja dónde
+ * está la plata. Acá cada día de mora pesa lo que pesa su monto.
+ */
+export function moraPonderada(rows: { monto: number; moraDias: number }[]): number {
+  const peso = rows.reduce((s, r) => s + r.monto, 0);
+  if (peso === 0) return 0;
+  return Math.round(rows.reduce((s, r) => s + r.moraDias * r.monto, 0) / peso);
+}

@@ -3,10 +3,15 @@
 import { useMemo, useState } from "react";
 import { scoreFacturas, getAction, ACTION_LABELS, ACTION_COLORS } from "@/lib/scoring";
 import type { ActionTier } from "@/lib/scoring";
-import { formatCLP } from "@/lib/utils";
+import { formatCLP, moraPonderada } from "@/lib/utils";
 import { DateRangeFilter, EMPTY_DATE_RANGE, inDateRange, type DateRange } from "@/components/ui/DateRangeFilter";
 
-interface Props { facturas: any[] }
+interface Pago { factura_id: string; fecha: string; monto_bruto: number }
+interface Props { facturas: any[]; pagos?: Pago[] }
+
+function mesDe(iso: string): string {
+  return iso.slice(0, 7);
+}
 
 const AGING_BUCKETS = [
   { label: "0–30 días",   min: 0,  max: 30  },
@@ -18,20 +23,52 @@ const AGING_BUCKETS = [
 
 const TIER_ORDER: ActionTier[] = ["contactar_hoy", "recontactar", "escalar", "monitorear", "ceder"];
 
-export function ReportesClient({ facturas: raw }: Props) {
+export function ReportesClient({ facturas: raw, pagos = [] }: Props) {
   const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
 
-  const scoredAll = useMemo(() => scoreFacturas(raw), [raw]);
+  // La cartera (gráficos, top deudores, aging) sigue siendo solo lo NO pagado.
+  // Las pagadas entran aparte, únicamente para medir recuperación.
+  const activasRaw = useMemo(() => raw.filter(f => f.estado !== "pagada"), [raw]);
+  const pagadasRaw = useMemo(() => raw.filter(f => f.estado === "pagada"), [raw]);
+
+  const scoredAll = useMemo(() => scoreFacturas(activasRaw), [activasRaw]);
   const scored = useMemo(
     () => scoredAll.filter(r => inDateRange(r.fecha_vencimiento, dateRange)),
     [scoredAll, dateRange]
   );
+  const pagadas = useMemo(
+    () => pagadasRaw.filter(f => inDateRange(f.fecha_vencimiento, dateRange)),
+    [pagadasRaw, dateRange]
+  );
 
-  const totalMonto    = scored.reduce((s, r) => s + r.monto, 0);
-  const urgentes      = scored.filter(r => r.action === "contactar_hoy");
-  const montoUrgente  = urgentes.reduce((s, r) => s + r.monto, 0);
-  const scorePromedio = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : 0;
-  const moraPromedio  = scored.length ? Math.round(scored.reduce((s, r) => s + r.moraDias, 0) / scored.length) : 0;
+  const totalMonto   = scored.reduce((s, r) => s + r.monto, 0);
+  const urgentes     = scored.filter(r => r.action === "contactar_hoy");
+  const montoUrgente = urgentes.reduce((s, r) => s + r.monto, 0);
+
+  // ── KPI 1 · Recuperado este mes, con delta real contra el mes anterior ──
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const prev = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  const mesPrevio = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+
+  const recMes    = pagos.filter(p => mesDe(p.fecha) === mesActual);
+  const recPrevio = pagos.filter(p => mesDe(p.fecha) === mesPrevio);
+  const montoMes    = recMes.reduce((s, p) => s + p.monto_bruto, 0);
+  const montoPrevio = recPrevio.reduce((s, p) => s + p.monto_bruto, 0);
+  const deltaPct = montoPrevio > 0 ? Math.round((montoMes - montoPrevio) / montoPrevio * 100) : null;
+
+  // ── KPI 2 · Tasa de recuperación sobre lo gestionado en el rango ──
+  const montoPagado    = pagadas.reduce((s, f) => s + (f.monto ?? 0), 0);
+  const montoGestionado = montoPagado + totalMonto;
+  const tasaRecuperacion = montoGestionado > 0 ? Math.round(montoPagado / montoGestionado * 100) : null;
+
+  // ── KPI 3 · Cartera vencida (exposición real de hoy) ──
+  const vencidas     = scored.filter(r => r.moraDias > 0);
+  const montoVencido = vencidas.reduce((s, r) => s + r.monto, 0);
+  const pctVencido   = totalMonto > 0 ? Math.round(montoVencido / totalMonto * 100) : 0;
+
+  // ── KPI 4 · Mora ponderada por monto ──
+  const moraPond = moraPonderada(vencidas);
 
   // Aging buckets
   const aging = AGING_BUCKETS.map(b => {
@@ -57,7 +94,9 @@ export function ReportesClient({ facturas: raw }: Props) {
   }
   const topDebtors = Object.values(byDebtor).sort((a, b) => b.monto - a.monto).slice(0, 5);
 
-  const empty = scored.length === 0;
+  // Si todo está cobrado, la cartera está vacía pero los KPIs de recuperación
+  // sí tienen algo que contar: no escondas la página en ese caso.
+  const empty = scored.length === 0 && pagadas.length === 0;
 
   return (
     <>
@@ -68,6 +107,12 @@ export function ReportesClient({ facturas: raw }: Props) {
             Análisis · Cartera de cobranza
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0F172A", margin: 0, lineHeight: 1.1 }}>Reportes</h1>
+          <div style={{ fontSize: 13, color: "#6B7280", marginTop: 7 }}>
+            {formatCLP(totalMonto)} en cartera activa · {scored.length} factura{scored.length === 1 ? "" : "s"}
+            {urgentes.length > 0 && (
+              <> · <span style={{ color: "#B23B3B", fontWeight: 700 }}>{formatCLP(montoUrgente)} para contactar hoy</span></>
+            )}
+          </div>
         </div>
         <div>
           <div style={{ fontSize: 11, letterSpacing: ".08em", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", marginBottom: 6 }}>Vencimiento</div>
@@ -92,15 +137,53 @@ export function ReportesClient({ facturas: raw }: Props) {
         {/* KPI strip */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 20 }} className="sm:grid-cols-4">
           {[
-            { label: "Total en cartera",   value: formatCLP(totalMonto),        sub: `${scored.length} facturas activas`,    color: "#0F172A", accent: "#E2E8F0" },
-            { label: "Monto urgente",       value: formatCLP(montoUrgente),      sub: `${urgentes.length} facturas "Contactar hoy"`, color: "#B23B3B", accent: "#FBE9E9" },
-            { label: "Score promedio",      value: String(scorePromedio),        sub: "IA · Motor de priorización",           color: "#1A5FA5", accent: "#EFF6FF" },
-            { label: "Mora promedio",       value: `${moraPromedio}d`,           sub: "promedio ponderado",                   color: "#B7791F", accent: "#FBF3E1" },
+            {
+              label: "Recuperado este mes",
+              value: montoMes > 0 ? formatCLP(montoMes) : "—",
+              sub: montoMes > 0
+                ? `${recMes.length} pago${recMes.length === 1 ? "" : "s"} registrado${recMes.length === 1 ? "" : "s"}`
+                : "Sin pagos registrados este mes",
+              color: montoMes > 0 ? "#1F7A4D" : "#9CA3AF",
+              delta: deltaPct,
+            },
+            {
+              label: "Tasa de recuperación",
+              value: tasaRecuperacion !== null ? `${tasaRecuperacion}%` : "—",
+              sub: tasaRecuperacion !== null
+                ? `${formatCLP(montoPagado)} de ${formatCLP(montoGestionado)} gestionado`
+                : "Aún sin facturas cerradas",
+              color: "#1A5FA5",
+              delta: null,
+            },
+            {
+              label: "Cartera vencida",
+              value: formatCLP(montoVencido),
+              sub: `${vencidas.length} factura${vencidas.length === 1 ? "" : "s"} · ${pctVencido}% de la cartera`,
+              color: montoVencido > 0 ? "#B23B3B" : "#1F7A4D",
+              delta: null,
+            },
+            {
+              label: "Mora ponderada",
+              value: vencidas.length > 0 ? `${moraPond}d` : "—",
+              sub: vencidas.length > 0 ? "Ponderada por monto, no por conteo" : "Nada vencido en el rango",
+              color: "#B7791F",
+              delta: null,
+            },
           ].map(k => (
             <div key={k.label} style={{ padding: "18px 20px", background: "#FFFFFF", borderRadius: 14, border: "1px solid #E2E8F0" }}>
               <div style={{ fontSize: 11, letterSpacing: ".1em", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", marginBottom: 10 }}>{k.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: k.color, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{k.value}</div>
-              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 6 }}>{k.sub}</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 26, fontWeight: 800, color: k.color, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{k.value}</div>
+                {k.delta !== null && (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: k.delta >= 0 ? "#1F7A4D" : "#B23B3B", whiteSpace: "nowrap" }}>
+                    {k.delta >= 0 ? "▲" : "▼"} {Math.abs(k.delta)}%
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 6 }}>
+                {k.sub}
+                {k.delta !== null && <span style={{ display: "block" }}>vs. mes anterior</span>}
+              </div>
             </div>
           ))}
         </div>
