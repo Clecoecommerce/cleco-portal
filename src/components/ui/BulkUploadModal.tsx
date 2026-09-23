@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { leerArchivoXml, SiiDatosExtraidos } from "@/lib/parseSiiXml";
 import { formatRUT, validarRUT } from "@/lib/utils";
-import { enviarEmailCobranza } from "@/lib/email";
+import { enviarCobranzaConsolidada, type FacturaParaCobro } from "@/lib/email";
 
 interface Props { open: boolean; onClose: () => void; profileId: string; onCreated?: () => void; }
 
@@ -23,12 +23,13 @@ const iCls = "w-full h-9 px-3 border border-[#E2E8F0] rounded-[8px] text-[13px] 
 export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) {
   const [filas,    setFilas]    = useState<FilaFactura[]>([]);
   const [loading,  setLoading]  = useState(false);
-  const [resumen,  setResumen]  = useState<{ ok: number; err: number } | null>(null);
+  const [notificar, setNotificar] = useState(false);
+  const [resumen,  setResumen]  = useState<{ ok: number; err: number; correos: number; notificadas: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function close() {
     if (loading) return;
-    setFilas([]); setResumen(null); onClose();
+    setFilas([]); setResumen(null); setNotificar(false); onClose();
   }
 
   async function agregarArchivos(files: FileList) {
@@ -64,6 +65,10 @@ export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) 
     setLoading(true);
     const sb = createClient();
     let ok = 0, err = 0;
+
+    // Agrupamos por deudor para mandar un solo correo por empresa al final,
+    // en vez de un correo por factura mientras se sube.
+    const porDeudor = new Map<string, { nombre: string; facturas: FacturaParaCobro[] }>();
 
     for (const fila of validas) {
       const d = fila.datos!;
@@ -102,16 +107,10 @@ export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) 
 
         if (fErr) throw new Error(fErr.message);
 
-        // Email automático si hay email de contacto
         if (fila.emailContacto) {
-          enviarEmailCobranza({
-            profileId,
-            emailDeudor: fila.emailContacto,
-            nombreDeudor: d.razonSocialDeudor,
-            numeroFactura: d.folio,
-            monto,
-            fechaVencimiento: d.fechaVencimiento,
-          }).catch(() => {});
+          const grupo = porDeudor.get(fila.emailContacto) ?? { nombre: d.razonSocialDeudor, facturas: [] };
+          grupo.facturas.push({ numero: d.folio, monto, fechaVencimiento: d.fechaVencimiento });
+          porDeudor.set(fila.emailContacto, grupo);
         }
 
         setFilas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: "ok" } : f));
@@ -123,8 +122,22 @@ export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) 
       }
     }
 
+    let correos = 0, notificadas = 0;
+    if (notificar) {
+      for (const [emailDeudor, grupo] of Array.from(porDeudor.entries())) {
+        try {
+          const r = await enviarCobranzaConsolidada({
+            profileId, emailDeudor, nombreDeudor: grupo.nombre, facturas: grupo.facturas,
+          });
+          if (r.enviado) { correos++; notificadas += r.notificadas; }
+        } catch {
+          // El correo es accesorio: las facturas ya quedaron guardadas.
+        }
+      }
+    }
+
     setLoading(false);
-    setResumen({ ok, err });
+    setResumen({ ok, err, correos, notificadas });
     onCreated?.();
   }
 
@@ -155,6 +168,11 @@ export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) 
             <div className={`px-4 py-3 rounded-[10px] text-[13.5px] font-medium ${resumen.err === 0 ? "bg-[#E5F4EC] text-[#1F7A4D]" : "bg-[#FBF3E1] text-[#B7791F]"}`}>
               {resumen.ok} factura{resumen.ok !== 1 ? "s" : ""} subida{resumen.ok !== 1 ? "s" : ""} correctamente
               {resumen.err > 0 && ` · ${resumen.err} con error`}
+              {notificar && (
+                resumen.correos > 0
+                  ? ` · ${resumen.correos} correo${resumen.correos !== 1 ? "s" : ""} enviado${resumen.correos !== 1 ? "s" : ""} (${resumen.notificadas} factura${resumen.notificadas !== 1 ? "s" : ""} vencida${resumen.notificadas !== 1 ? "s" : ""})`
+                  : " · sin correos: ninguna factura está vencida"
+              )}
             </div>
           )}
 
@@ -253,6 +271,21 @@ export function BulkUploadModal({ open, onClose, profileId, onCreated }: Props) 
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Cobranza explícita: subir ≠ cobrar */}
+          {hayValidas && !resumen && (
+            <label className="flex items-start gap-3 px-4 py-3.5 rounded-[12px] border border-[#E2E8F0] cursor-pointer hover:bg-[#FAFBFD] transition-colors">
+              <input type="checkbox" className="mt-0.5 w-4 h-4 accent-[#2563EB] shrink-0"
+                checked={notificar} onChange={e => setNotificar(e.target.checked)} disabled={loading} />
+              <span className="text-[13px] text-[#1E293B]">
+                <b>Enviar cobranza a los deudores al terminar</b>
+                <span className="block text-[12px] text-[#6B7280] mt-0.5">
+                  Un solo correo por deudor, con sus facturas vencidas agrupadas. Las que aún no vencen no se cobran.
+                  Solo se envía a quienes tengan email de contacto.
+                </span>
+              </span>
+            </label>
           )}
 
           {filas.length === 0 && !resumen && (

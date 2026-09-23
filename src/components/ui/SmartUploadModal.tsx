@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { validarRUT, formatRUT } from "@/lib/utils";
-import { enviarEmailCobranza } from "@/lib/email";
+import { enviarCobranzaConsolidada, type FacturaParaCobro } from "@/lib/email";
 import { parsearNomina, plantillaNominaCsv, COLUMNAS_NOMINA } from "@/lib/nomina";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,6 +54,10 @@ interface FinalResult {
   saved: number;
   rejected: number;
   savedFolios: SavedFolio[];
+  /** Correos de cobranza efectivamente enviados (uno por deudor) */
+  correos: number;
+  /** Facturas incluidas en esos correos */
+  notificadas: number;
 }
 
 type Stage = "drop" | "processing" | "preview" | "saving" | "done";
@@ -177,9 +181,15 @@ interface Props {
   onClose: () => void;
   profileId: string;
   onCreated?: () => void;
+  /**
+   * Archivos que el usuario ya eligió antes de abrir el modal (por ejemplo en la
+   * zona de arrastre de /dashboard/carga). Se procesan solos al abrir para no
+   * obligarlo a volver a seleccionarlos.
+   */
+  initialFiles?: File[];
 }
 
-export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props) {
+export function SmartUploadModal({ open, onClose, profileId, onCreated, initialFiles }: Props) {
   const [stage, setStage] = useState<Stage>("drop");
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [processedCount, setProcessedCount] = useState(0);
@@ -187,11 +197,21 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
   const [drag, setDrag] = useState(false);
   const [dropError, setDropError] = useState("");
   const [finalResult, setFinalResult] = useState<FinalResult | null>(null);
+  const [notificar, setNotificar] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const fileRef = useRef<HTMLInputElement>(null);
   // Shared mutable array for parallel updates → safe because each slot is accessed by only one Promise
   const resultsRef = useRef<InvoiceRow[]>([]);
+  // Evita reprocesar initialFiles en cada render
+  const autoProcesado = useRef(false);
+
+  useEffect(() => {
+    if (!open || autoProcesado.current || !initialFiles?.length) return;
+    autoProcesado.current = true;
+    processFiles(initialFiles);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialFiles]);
 
   // ── Helpers ──
 
@@ -203,7 +223,9 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
     setTotalCount(0);
     setDropError("");
     setFinalResult(null);
+    setNotificar(false);
     setExpanded(new Set());
+    autoProcesado.current = false;
     onClose();
   }
 
@@ -494,6 +516,10 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
     let failed = 0;
     const savedFolios: SavedFolio[] = [];
 
+    // Agrupamos por deudor para mandar un solo correo por empresa al final,
+    // en vez de un correo por factura mientras se guarda la nómina.
+    const porDeudor = new Map<string, { nombre: string; facturas: FacturaParaCobro[] }>();
+
     for (const row of toSave) {
       try {
         const { data: deudor, error: dErr } = await sb
@@ -543,14 +569,9 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
         // No se cobra una factura que la nómina ya marca como pagada
         if (row.emailContacto && estado !== "pagada") {
-          enviarEmailCobranza({
-            profileId,
-            emailDeudor: row.emailContacto,
-            nombreDeudor: row.razonSocial,
-            numeroFactura: row.folio,
-            monto,
-            fechaVencimiento: row.fechaVencimiento,
-          }).catch(() => {});
+          const grupo = porDeudor.get(row.emailContacto) ?? { nombre: row.razonSocial, facturas: [] };
+          grupo.facturas.push({ numero: row.folio, monto, fechaVencimiento: row.fechaVencimiento });
+          porDeudor.set(row.emailContacto, grupo);
         }
       } catch {
         failed++;
@@ -561,7 +582,21 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
       rows.filter((r) => r.status === "error" || r.status === "invalid" || r.status === "duplicate").length +
       failed;
 
-    setFinalResult({ saved, rejected, savedFolios });
+    let correos = 0, notificadas = 0;
+    if (notificar) {
+      for (const [emailDeudor, grupo] of Array.from(porDeudor.entries())) {
+        try {
+          const r = await enviarCobranzaConsolidada({
+            profileId, emailDeudor, nombreDeudor: grupo.nombre, facturas: grupo.facturas,
+          });
+          if (r.enviado) { correos++; notificadas += r.notificadas; }
+        } catch {
+          // El correo es accesorio: las facturas ya quedaron guardadas.
+        }
+      }
+    }
+
+    setFinalResult({ saved, rejected, savedFolios, correos, notificadas });
     setStage("done");
     onCreated?.();
   }
@@ -1161,6 +1196,13 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
                       ? `${finalResult.rejected} omitida${finalResult.rejected !== 1 ? "s" : ""} (duplicadas, errores o descartadas manualmente)`
                       : "Todas las facturas seleccionadas se guardaron exitosamente."}
                   </p>
+                  <p className="text-[13px] text-[#1F7A4D]/70 mt-0.5">
+                    {!notificar
+                      ? "No se envió cobranza a los deudores."
+                      : finalResult.correos > 0
+                        ? `${finalResult.correos} correo${finalResult.correos !== 1 ? "s" : ""} de cobranza enviado${finalResult.correos !== 1 ? "s" : ""} · ${finalResult.notificadas} factura${finalResult.notificadas !== 1 ? "s" : ""} vencida${finalResult.notificadas !== 1 ? "s" : ""}`
+                        : "Sin correos: ninguna factura está vencida todavía."}
+                  </p>
                 </div>
               </div>
 
@@ -1195,13 +1237,27 @@ export function SmartUploadModal({ open, onClose, profileId, onCreated }: Props)
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-[#F1F5F9] shrink-0 bg-white">
-          <span className="flex items-center gap-1.5 text-[11.5px] text-[#9CA3AF]">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
-            Cifrado extremo a extremo
-          </span>
+          {stage === "preview" ? (
+            /* Cobranza explícita: cargar la nómina no equivale a cobrarla */
+            <label className="flex items-start gap-2.5 cursor-pointer max-w-[420px]">
+              <input type="checkbox" className="mt-0.5 w-4 h-4 accent-[#2563EB] shrink-0"
+                checked={notificar} onChange={(e) => setNotificar(e.target.checked)} />
+              <span className="text-[12.5px] text-[#1E293B] leading-snug">
+                <b>Enviar cobranza a los deudores</b>
+                <span className="block text-[11.5px] text-[#6B7280]">
+                  Un correo por deudor con sus facturas vencidas. Las que aún no vencen no se cobran.
+                </span>
+              </span>
+            </label>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[11.5px] text-[#9CA3AF]">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              Cifrado extremo a extremo
+            </span>
+          )}
 
           <div className="flex gap-2">
             {(stage === "drop" || stage === "preview") && (
