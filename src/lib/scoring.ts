@@ -91,6 +91,41 @@ export const ACTION_COLORS: Record<ActionTier, { bg: string; color: string; text
   ceder:         { bg: "#F1F5F9", color: "#7F1D1D", text: "#7F1D1D", border: "#CBD5E1" },
 };
 
+// ── Tramos de mora (semáforo de aging) ────────────────────────────────────────
+// Una sola definición para los chips de la bandeja y el Excel del portafolio,
+// para que los conteos de ambos siempre cuadren.
+
+export type TramoMora = "por_vencer" | "d1_7" | "d8_30" | "d31_60" | "d61_90" | "d90_mas";
+
+export const TRAMOS_MORA: TramoMora[] = ["por_vencer", "d1_7", "d8_30", "d31_60", "d61_90", "d90_mas"];
+
+export const TRAMO_LABELS: Record<TramoMora, string> = {
+  por_vencer: "Por vencer",
+  d1_7:       "1–7 días",
+  d8_30:      "8–30 días",
+  d31_60:     "31–60 días",
+  d61_90:     "61–90 días",
+  d90_mas:    "+90 días",
+};
+
+export const TRAMO_COLORS: Record<TramoMora, { bg: string; text: string }> = {
+  por_vencer: { bg: "#E5F4EC", text: "#1F7A4D" },
+  d1_7:       { bg: "#FBF3E1", text: "#B7791F" },
+  d8_30:      { bg: "#FFEDD5", text: "#C2410C" },
+  d31_60:     { bg: "#FBE9E9", text: "#B23B3B" },
+  d61_90:     { bg: "#FBE9E9", text: "#991B1B" },
+  d90_mas:    { bg: "#F1F5F9", text: "#7F1D1D" },
+};
+
+export function getTramoMora(moraDias: number): TramoMora {
+  if (moraDias <= 0) return "por_vencer";
+  if (moraDias <= 7)  return "d1_7";
+  if (moraDias <= 30) return "d8_30";
+  if (moraDias <= 60) return "d31_60";
+  if (moraDias <= 90) return "d61_90";
+  return "d90_mas";
+}
+
 // Color de cada barra del desglose según su propio valor (no el tier de la acción global)
 export function factorBarColor(v: number): string {
   if (v >= 85) return "#DC2626";

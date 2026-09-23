@@ -6,6 +6,7 @@ import type { ScoredFactura } from "@/lib/scoring";
 import { ACTION_LABELS, ACTION_COLORS, ACTION_DESCRIPTIONS, TIPO_LABELS, factorBarColor } from "@/lib/scoring";
 import { formatCLP, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { EditInvoiceModal } from "@/components/ui/EditInvoiceModal";
 
 interface Props {
   row: ScoredFactura | null;
@@ -130,6 +131,7 @@ Equipo de Cobranza — ${profileName}`,
 // ── Main Drawer ───────────────────────────────────────────────────────────────
 export function InvoiceDrawer({ row, onClose, onOpenDebtor, profileName = "Equipo de Cobranza" }: Props) {
   const router = useRouter();
+  const [editando, setEditando] = useState(false);
   if (!row) return null;
 
   const ac  = ACTION_COLORS[row.action];
@@ -139,7 +141,7 @@ export function InvoiceDrawer({ row, onClose, onOpenDebtor, profileName = "Equip
   const moraDias  = row.moraDias;
   const dueLabel  = moraDias > 0 ? `${moraDias} d vencida` : moraDias === 0 ? "Vence hoy" : `En ${-moraDias}d`;
   const dueColor  = moraDias > 0 ? "#DC2626" : moraDias === 0 ? "#B7791F" : "#1F7A4D";
-  const emitida   = row.created_at ? formatDate(row.created_at) : null;
+  const emitida   = row.fecha_emision ? formatDate(row.fecha_emision) : null;
 
   const onMarcarAccion = async () => {
     const supabase = createClient();
@@ -153,6 +155,20 @@ export function InvoiceDrawer({ row, onClose, onOpenDebtor, profileName = "Equip
 
   return (
     <>
+      {editando && (
+        <EditInvoiceModal
+          factura={row}
+          onClose={() => setEditando(false)}
+          onSaved={() => {
+            setEditando(false);
+            // El drawer vive de datos del servidor; se cierra para no mostrar
+            // los valores viejos mientras llega el refresh.
+            onClose();
+            router.refresh();
+          }}
+        />
+      )}
+
       {/* Backdrop */}
       <div onClick={onClose}
         style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.35)", zIndex: 60, backdropFilter: "blur(2px)" }} />
@@ -179,6 +195,13 @@ export function InvoiceDrawer({ row, onClose, onOpenDebtor, profileName = "Equip
               N° {row.numero} · {row.deudores?.rut ?? "—"}{row.deudores?.tipo ? ` · ${TIPO_LABELS[row.deudores.tipo]}` : ""}
             </div>
           </div>
+          <button onClick={() => setEditando(true)} title="Editar factura"
+            style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
           <button onClick={onClose}
             style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round">

@@ -44,6 +44,9 @@ export function CargaClient({ profileId }: Props) {
           open={modalOpen}
           onClose={() => { setModalOpen(false); setFiles([]); }}
           profileId={profileId}
+          // Sin esto el modal se abre en su propia zona de arrastre vacía y
+          // el usuario tiene que elegir el archivo dos veces.
+          initialFiles={files}
           onCreated={(...args: any[]) => {
             setModalOpen(false);
             setFiles([]);
@@ -93,7 +96,7 @@ export function CargaClient({ profileId }: Props) {
           <input ref={inputRef} type="file" multiple
             accept=".csv,.xlsx,.xls,.xml,.pdf,.png,.jpg,.jpeg"
             style={{ display: "none" }}
-            onChange={e => handleFiles(e.target.files)} />
+            onChange={e => { handleFiles(e.target.files); e.target.value = ""; }} />
 
           <div style={{ width: 56, height: 56, borderRadius: 16, background: dragging ? "#DBEAFE" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .18s" }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={dragging ? "#2563EB" : "#60A5FA"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

@@ -79,6 +79,8 @@ export interface Factura {
   deudor_id: string;
   numero: string;
   monto: number;
+  /** Nullable: los PDF e imágenes no siempre traen la emisión legible */
+  fecha_emision: string | null;
   fecha_vencimiento: string;
   estado: "en_gestion" | "pendiente" | "pagada";
   archivo_url: string | null;

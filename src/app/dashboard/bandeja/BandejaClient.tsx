@@ -2,9 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { scoreFacturas, ACTION_LABELS, ACTION_COLORS, TIPO_LABELS } from "@/lib/scoring";
-import type { ScoredFactura, ActionTier } from "@/lib/scoring";
+import {
+  scoreFacturas, ACTION_LABELS, ACTION_COLORS, TIPO_LABELS,
+  TRAMOS_MORA, TRAMO_LABELS, TRAMO_COLORS, getTramoMora,
+} from "@/lib/scoring";
+import type { ScoredFactura, ActionTier, TramoMora } from "@/lib/scoring";
 import { formatCLP, formatDate } from "@/lib/utils";
+import { exportarPortafolioXlsx } from "@/lib/exportPortafolio";
 import { InvoiceDrawer } from "@/components/ui/InvoiceDrawer";
 import { DebtorDrawer } from "@/components/ui/DebtorDrawer";
 import { DateRangeFilter, EMPTY_DATE_RANGE, inDateRange, type DateRange } from "@/components/ui/DateRangeFilter";
@@ -41,6 +45,15 @@ const GRID_COLS = "minmax(0,2.3fr) 1.05fr 1.15fr 1fr 86px minmax(0,1.5fr) 26px";
 
 type SortKey = "deudor" | "venc" | "monto" | "score";
 
+// La bandeja ya excluye las pagadas, así que sólo quedan estos dos estados
+type EstadoKey = "todos" | "en_gestion" | "pendiente";
+
+const ESTADO_LABELS: Record<EstadoKey, string> = {
+  todos:      "Todos los estados",
+  en_gestion: "En gestión",
+  pendiente:  "Pendiente",
+};
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza" }: { facturas: any[]; profileName?: string }) {
   const params       = useSearchParams();
@@ -51,6 +64,9 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
+  const [estado, setEstado]   = useState<EstadoKey>("todos");
+  const [tramo, setTramo]     = useState<TramoMora | "todos">("todos");
+  const [exportando, setExportando] = useState(false);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === "desc" ? "asc" : "desc"));
@@ -71,6 +87,27 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
     return acc;
   }, { todas: scored.length }), [scored]);
 
+  // Conteos por tramo sobre el resto de los filtros, para que los chips no
+  // ofrezcan tramos que darían cero resultados
+  const tramoCounts = useMemo(() => {
+    const base = scored.filter(r => {
+      const q = search.toLowerCase();
+      const matchQ = !q
+        || r.deudores?.razon_social?.toLowerCase().includes(q)
+        || r.deudores?.rut?.toLowerCase().includes(q)
+        || r.numero?.toLowerCase().includes(q);
+      return matchQ
+        && (filter === "todas" || r.action === filter)
+        && (estado === "todos" || r.estado === estado)
+        && inDateRange(r.fecha_vencimiento, dateRange);
+    });
+    return base.reduce<Record<string, number>>((acc, r) => {
+      const t = getTramoMora(r.moraDias);
+      acc[t] = (acc[t] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [scored, search, filter, estado, dateRange]);
+
   const filtered = useMemo(() => scored.filter(r => {
     const q = search.toLowerCase();
     const matchQ = !q
@@ -79,8 +116,39 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
       || r.numero?.toLowerCase().includes(q);
     const matchF = filter === "todas" || r.action === filter;
     const matchD = inDateRange(r.fecha_vencimiento, dateRange);
-    return matchQ && matchF && matchD;
-  }), [scored, search, filter, dateRange]);
+    const matchE = estado === "todos" || r.estado === estado;
+    const matchT = tramo === "todos" || getTramoMora(r.moraDias) === tramo;
+    return matchQ && matchF && matchD && matchE && matchT;
+  }), [scored, search, filter, dateRange, estado, tramo]);
+
+  const hayFiltros = Boolean(search) || filter !== "todas" || estado !== "todos"
+    || tramo !== "todos" || dateRange.from !== "" || dateRange.to !== "";
+
+  const limpiarFiltros = () => {
+    setSearch(""); setFilter("todas"); setEstado("todos");
+    setTramo("todos"); setDateRange(EMPTY_DATE_RANGE);
+  };
+
+  async function descargarPortafolio() {
+    if (exportando || filtered.length === 0) return;
+    setExportando(true);
+    try {
+      const partes = [
+        filter !== "todas" ? `acción: ${ACTION_LABELS[filter as ActionTier]}` : null,
+        estado !== "todos" ? `estado: ${ESTADO_LABELS[estado]}` : null,
+        tramo !== "todos" ? `mora: ${TRAMO_LABELS[tramo]}` : null,
+        dateRange.from || dateRange.to
+          ? `vencimiento ${dateRange.from || "…"} a ${dateRange.to || "…"}` : null,
+        search ? `búsqueda: "${search}"` : null,
+      ].filter(Boolean);
+      await exportarPortafolioXlsx(filtered, {
+        nombreEmpresa: profileName,
+        filtrosAplicados: partes.length ? partes.join(" · ") : "Ninguno (cartera completa)",
+      });
+    } finally {
+      setExportando(false);
+    }
+  }
 
   const sorted = useMemo(() => {
     const dir = sortDir === "desc" ? -1 : 1;
@@ -116,8 +184,19 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#0F172A", lineHeight: 1.1, margin: 0 }}>Bandeja de cobranza</h1>
-          <div style={{ fontSize: 13, color: "#9CA3AF", fontWeight: 500 }}>
-            {scored.length} facturas · {filter === "todas" ? "todas las acciones" : ACTION_LABELS[filter as ActionTier]}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 13, color: "#9CA3AF", fontWeight: 500 }}>
+              {filtered.length} de {scored.length} facturas
+            </div>
+            <button onClick={descargarPortafolio} disabled={exportando || filtered.length === 0}
+              title="Descarga las facturas filtradas con resumen ejecutivo, aging y concentración por deudor"
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 36, padding: "0 14px", borderRadius: 9, fontSize: 13, fontWeight: 700, fontFamily: "inherit", border: "1px solid #E2E8F0", background: "#FFFFFF", color: "#1E293B", cursor: filtered.length === 0 ? "not-allowed" : "pointer", opacity: exportando || filtered.length === 0 ? .5 : 1 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              {exportando ? "Generando…" : "Descargar portafolio (Excel)"}
+            </button>
           </div>
         </div>
       </div>
@@ -134,11 +213,43 @@ export function BandejaClient({ facturas: raw, profileName = "Equipo de Cobranza
               onFocus={e => (e.target.style.borderColor = "#2563EB")}
               onBlur={e => (e.target.style.borderColor = "#E2E8F0")} />
           </div>
-          {search && (
-            <button onClick={() => setSearch("")} style={{ fontSize: 12, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>Limpiar</button>
-          )}
+          {/* Estado de pago */}
+          <select value={estado} onChange={e => setEstado(e.target.value as EstadoKey)}
+            aria-label="Estado de pago"
+            style={{ height: 34, padding: "0 10px", border: "1px solid #E2E8F0", borderRadius: 8, fontSize: 13, fontFamily: "inherit", color: "#0F172A", background: "#F8FAFC", cursor: "pointer" }}>
+            {(Object.keys(ESTADO_LABELS) as EstadoKey[]).map(k => (
+              <option key={k} value={k}>{ESTADO_LABELS[k]}</option>
+            ))}
+          </select>
           {/* Vencimiento */}
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          {hayFiltros && (
+            <button onClick={limpiarFiltros} style={{ fontSize: 12, fontWeight: 600, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        {/* Tramo de mora (aging) */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid #F1F5F9" }}>
+          <span style={{ fontSize: 11, letterSpacing: ".08em", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", marginRight: 2 }}>Mora</span>
+          {(["todos", ...TRAMOS_MORA] as const).map(t => {
+            const isActive = tramo === t;
+            const label = t === "todos" ? "Cualquiera" : TRAMO_LABELS[t];
+            const n = t === "todos"
+              ? Object.values(tramoCounts).reduce((s, v) => s + v, 0)
+              : (tramoCounts[t] ?? 0);
+            const tc = t === "todos" ? null : TRAMO_COLORS[t];
+            return (
+              <button key={t} onClick={() => setTramo(t)} disabled={n === 0 && !isActive}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, height: 28, padding: "0 11px", borderRadius: 20, fontSize: 12, fontWeight: 700, fontFamily: "inherit", border: "none", cursor: n === 0 && !isActive ? "default" : "pointer", opacity: n === 0 && !isActive ? .4 : 1, transition: "all .12s",
+                  background: isActive ? "#0F172A" : (tc?.bg ?? "#F1F5F9"),
+                  color:      isActive ? "#FFFFFF" : (tc?.text ?? "#6B7280") }}>
+                {label}
+                <span style={{ opacity: .75, fontSize: 11 }}>({n})</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Chip rows */}
