@@ -5,11 +5,11 @@ import LandingPage from "@/components/landing/LandingPage";
 export const metadata = {
   title: "Cleco · Cobranza que no duele",
   description:
-    "Recuperamos tus cuentas por cobrar con IA y trato respetuoso. Sin mensualidades. Sin riesgo. Solo resultados.",
+    "Ordenamos la cobranza de tu empresa desde que emites la factura y, si lo necesitas, cobramos por ti sin romper la relación con tus clientes.",
   openGraph: {
     title: "Cleco · Cobranza que no duele",
     description:
-      "Recuperamos tus cuentas por cobrar con IA y trato respetuoso. Sin mensualidades. Sin riesgo. Solo resultados.",
+      "Ordenamos la cobranza de tu empresa desde que emites la factura y, si lo necesitas, cobramos por ti sin romper la relación con tus clientes.",
     url: "https://cleco.cl",
     siteName: "Cleco",
     locale: "es_CL",
