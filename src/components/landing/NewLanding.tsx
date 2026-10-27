@@ -124,8 +124,12 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
 @media (max-width:640px){.toast{right:8px;left:8px;top:auto;bottom:118px}.steps-live{min-height:150px}.live-card{padding:18px}}
 
 /* planes */
-.plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
-@media (max-width:820px){.plans{grid-template-columns:1fr}}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media (max-width:1060px){.plans{grid-template-columns:1fr}}
+.plan-rec{background:#fff;border:1px solid var(--line)}
+.plan-rec .plan-icon{background:#FEF3C7;color:#B45309}
+.plan-rec .plan-type{color:#B45309}
+@media (min-width:1061px){.plan-360{transform:translateY(-14px)}.js .plan-360.reveal.in{transform:translateY(-14px)}}
 .plan{position:relative;border-radius:22px;padding:32px;display:flex;flex-direction:column;gap:16px}
 .plan-basic{background:#fff;border:1px solid var(--line)}
 .plan-360{background:var(--ink);color:#fff;box-shadow:0 30px 60px -30px rgba(37,99,235,.55)}
@@ -152,13 +156,13 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
 .plan-360 .plan-price span{color:#8DB8FF}
 .plan-badge{position:absolute;top:-12px;right:24px;background:#FBBF24;color:var(--ink);font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px}
 .who{margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.who-row{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;padding:14px 20px;border-top:1px solid var(--line);font-size:15px;align-items:center}
+.who-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:12px;padding:14px 20px;border-top:1px solid var(--line);font-size:15px;align-items:center}
 .who-row:first-child{border-top:0}
 .who-head{background:#F8FAFC;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .c-you{color:var(--muted)}
 .c-auto{color:var(--blue-2);font-weight:600}
 .c-us{color:var(--ink);font-weight:700}
-@media (max-width:560px){.who-row{grid-template-columns:1.3fr .9fr .9fr;padding:12px 14px;font-size:13.5px;gap:8px}.plan{padding:24px}}
+@media (max-width:560px){.who-row{grid-template-columns:1.25fr .85fr .8fr .9fr;padding:12px 12px;font-size:12.5px;gap:6px}.who-head{font-size:10.5px;letter-spacing:.02em}.plan{padding:24px}}
 
 /* movimiento */
 .draft-bar{background:#FBBF24;color:var(--ink);font-size:12px;font-weight:700;text-align:center;padding:4px 12px;letter-spacing:.02em}
@@ -170,9 +174,6 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
 .js .stagger.in > *{transform:none;opacity:1}
 .js .stagger.in > *:nth-child(2){transition-delay:.08s}.js .stagger.in > *:nth-child(3){transition-delay:.16s}
 .js .stagger.in > *:nth-child(4){transition-delay:.24s}.js .stagger.in > *:nth-child(5){transition-delay:.32s}.js .stagger.in > *:nth-child(6){transition-delay:.4s}
-.js .ladder .rung{transform:translateX(-30px);opacity:.3;transition:transform .6s cubic-bezier(.2,.7,.2,1),opacity .6s ease}
-.js .ladder.in .rung{transform:none;opacity:1}
-.ladder.in .rung:nth-child(2){transition-delay:.1s}.ladder.in .rung:nth-child(3){transition-delay:.2s}.ladder.in .rung:nth-child(4){transition-delay:.3s}.ladder.in .rung:nth-child(5){transition-delay:.4s}.ladder.in .rung:nth-child(6){transition-delay:.5s}
 .hero h1 .blue{display:inline-block}
 .js .hero h1 .blue{animation:pop .9s .2s cubic-bezier(.2,.8,.2,1) both}
 @keyframes pop{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
@@ -187,7 +188,7 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
   .mcta .btn{width:100%;justify-content:center}
   footer{padding-bottom:96px}
 }
-@media (prefers-reduced-motion:reduce){.js .reveal,.js .stagger > *,.js .ladder .rung{transform:none!important;opacity:1!important}.js .hero h1 .blue{animation:none}.res-main::after{display:none}}
+@media (prefers-reduced-motion:reduce){.js .reveal,.js .stagger > *{transform:none!important;opacity:1!important}.js .hero h1 .blue{animation:none}.res-main::after{display:none}}
 
 /* resultados */
 .results{background:var(--ink);color:#fff}
@@ -207,6 +208,10 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
 .results .src{color:#8391A7}
 
 /* facts */
+.problem .sec-head{margin-left:auto;margin-right:auto;text-align:center;justify-items:center}
+.problem .fact{text-align:center;justify-items:center;padding:36px 24px 12px}
+.problem .fact p{max-width:30ch}
+.problem .src{text-align:center}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line)}
 @media (max-width:820px){.facts{grid-template-columns:1fr}}
 .fact{padding:32px 28px 8px 0;display:grid;gap:10px}
@@ -243,6 +248,42 @@ header.nav .wrap{display:flex;align-items:center;justify-content:space-between;g
 .ladder-note{display:grid;gap:18px}
 .ladder-note li{margin-bottom:10px;color:#D6DEEA}
 .ladder-note ul{padding-left:20px;margin:0}
+
+/* escalamiento al hacer scroll */
+.esc{padding-block:0;overflow-x:clip}
+html,body{overflow-x:clip}
+.esc-sticky{padding-block:clamp(72px,9vw,120px)}
+.js .esc-track{height:300vh}
+.js .esc-sticky{position:sticky;top:70px;min-height:calc(100vh - 70px);display:flex;align-items:center;padding-block:40px}
+.esc .ladder-grid{align-items:center;width:100%}
+.esc-count{font-size:15px;color:#AEB8CA;font-variant-numeric:tabular-nums}
+.esc-count b{display:inline-block;color:#fff;font-size:28px;font-weight:800;min-width:1ch;transition:transform .3s}
+.ladder{position:relative;padding-left:28px}
+.esc-line{position:absolute;left:8px;top:8px;bottom:8px;width:3px;border-radius:3px;background:#24314D}
+.esc-line span{display:block;width:100%;height:0;border-radius:3px;background:linear-gradient(#60A5FA,var(--blue))}
+.js .esc .rung{opacity:0;transform:translateX(60px) scale(.94);transition:opacity .5s,transform .6s cubic-bezier(.2,.9,.25,1.15),background .35s,border-color .35s,box-shadow .35s}
+.js .esc .rung.on{opacity:.45;transform:none}
+.js .esc .rung.cur{opacity:1;background:var(--blue);border-color:#60A5FA;box-shadow:0 24px 50px -20px rgba(37,99,235,.8);transform:scale(1.03)}
+.js .esc .rung.cur .lvl{color:#fff}
+.js .esc .rung.cur p{color:#E0EAFF}
+.js .esc .rung p{max-height:0;overflow:hidden;opacity:0;transition:max-height .45s,opacity .35s}
+.js .esc .rung.cur p,.js .esc .rung.done p{max-height:80px;opacity:1}
+.js .esc .rung.done{opacity:1}
+.js .esc .rung.cur .you{animation:youp 1.2s infinite}
+@keyframes youp{50%{transform:scale(1.12)}}
+@media (max-width:960px){.ladder-note ul{display:none}}
+@media (max-width:640px){
+  .js .esc-sticky{top:62px;align-items:flex-start;padding-block:28px 20px}
+  .esc .ladder-note{gap:10px}
+  .esc .ladder-note h2{font-size:28px}
+  .esc .ladder-note .lead{display:none}
+  .esc .ladder{gap:8px}
+  .rung{padding:12px 14px;grid-template-columns:30px 1fr;gap:10px}
+  .rung h3{font-size:15.5px}
+  .rung .lvl{font-size:18px}
+  .rung p{font-size:13.5px}
+}
+@media (prefers-reduced-motion:reduce){.js .esc-track{height:auto}.js .esc-sticky{position:static}.js .esc .rung{opacity:1!important;transform:none!important}.js .esc .rung p{max-height:none;opacity:1}}
 
 /* portal */
 .portal-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:center}
@@ -457,7 +498,7 @@ const HTML = `
 </section>
 
 <!-- PROBLEMA -->
-<section class="band-sky">
+<section class="band-sky problem">
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="kicker">El problema</div>
@@ -479,7 +520,7 @@ const HTML = `
     <div class="sec-head reveal">
       <div class="kicker">Planes</div>
       <h2>¿Cobras tú o cobramos nosotros?</h2>
-      <p class="lead">Elige cuánto quieres delegar. Puedes partir con uno y cambiarte cuando lo necesites.</p>
+      <p class="lead">Tres formas de trabajar con Cleco, según cuánto quieras delegar. Puedes partir con una y cambiarte cuando lo necesites.</p>
     </div>
     <div class="plans">
       <article class="plan plan-basic reveal">
@@ -514,15 +555,32 @@ const HTML = `
           <li><b>Cobranza morosa:</b> un mediador negocia las facturas difíciles</li>
           <li>Escalamiento solo con tu autorización</li>
         </ul>
-        <p class="plan-price"><span>Cómo se paga</span>Comisión por factura gestionada: baja si aún no vence, mayor según los días de mora y el monto.</p>
+        <p class="plan-price"><span>Cómo se paga</span>Mensualidad + un % de comisión por cada factura vencida que recuperamos.</p>
+      </article>
+      <article class="plan plan-rec reveal">
+        <div class="plan-top">
+          <span class="plan-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5"/><path d="M3 3l8 8M3 9V3h6"/><path d="M14 13h4M14 17h4"/></svg>
+          </span>
+          <div><span class="plan-name">Cleco Recupera</span><span class="plan-type">Solo facturas vencidas</span></div>
+        </div>
+        <h3>Ya vencieron.<br>Nosotros las recuperamos.</h3>
+        <p class="plan-for">Para empresas que tienen su cobranza al día, pero arrastran facturas morosas.</p>
+        <ul class="checks">
+          <li>Nos entregas solo las facturas vencidas</li>
+          <li><b>Un mediador</b> negocia con cada cliente</li>
+          <li>Escalamiento solo con tu autorización</li>
+          <li>Ves cada gestión en tu portal</li>
+        </ul>
+        <p class="plan-price"><span>Cómo se paga</span>Te lo cotizamos según tu cartera vencida.</p>
       </article>
     </div>
     <div class="who reveal" role="table" aria-label="Quién hace cada tarea en cada plan">
-      <div class="who-row who-head" role="row"><span role="columnheader">¿Quién lo hace?</span><span role="columnheader">Básico</span><span role="columnheader">360</span></div>
-      <div class="who-row" role="row"><span role="cell">Recordar antes y después del vencimiento</span><span role="cell" class="c-auto">Cleco, automático</span><span role="cell" class="c-us">Cleco</span></div>
-      <div class="who-row" role="row"><span role="cell">Llamar cuando no responden</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco</span></div>
-      <div class="who-row" role="row"><span role="cell">Negociar facturas morosas y planes de pago</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco, tú apruebas</span></div>
-      <div class="who-row" role="row"><span role="cell">Coordinar con tu equipo comercial</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco</span></div>
+      <div class="who-row who-head" role="row"><span role="columnheader">¿Quién lo hace?</span><span role="columnheader">Básico</span><span role="columnheader">360</span><span role="columnheader">Recupera</span></div>
+      <div class="who-row" role="row"><span role="cell">Recordar antes y después del vencimiento</span><span role="cell" class="c-auto">Cleco, automático</span><span role="cell" class="c-us">Cleco</span><span role="cell" class="c-you">No incluye</span></div>
+      <div class="who-row" role="row"><span role="cell">Llamar cuando no responden</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco</span><span role="cell" class="c-us">Cleco</span></div>
+      <div class="who-row" role="row"><span role="cell">Negociar facturas morosas y planes de pago</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco, tú apruebas</span><span role="cell" class="c-us">Cleco, tú apruebas</span></div>
+      <div class="who-row" role="row"><span role="cell">Coordinar con tu equipo comercial</span><span role="cell" class="c-you">Tu equipo</span><span role="cell" class="c-us">Cleco</span><span role="cell" class="c-us">Cleco</span></div>
     </div>
     <div class="price-foot reveal">
       <p style="color:var(--ink-2);max-width:60ch">¿No sabes cuál te conviene? En el diagnóstico gratuito te recomendamos el plan y te damos el valor exacto para tu cartera.</p>
@@ -537,7 +595,7 @@ const HTML = `
     <div class="sec-head reveal">
       <div class="kicker">Cómo funciona Cleco 360</div>
       <h2>Un método, no una planilla y buena voluntad.</h2>
-      <p class="lead">Es el mismo proceso con el que cobramos hoy, convertido en reglas claras para cada factura. Cleco Básico automatiza los pasos 1 a 3.</p>
+      <p class="lead">Es el mismo proceso con el que cobramos hoy, convertido en reglas claras para cada factura. Cleco Básico automatiza los pasos 1 a 3 y Cleco Recupera parte en el paso 5.</p>
     </div>
     <div class="steps stagger">
       <div class="step"><span class="num"></span><h3>Nos compartes tu cartera</h3><p>Cada semana, en Excel o exportada de tu ERP. Detectamos qué facturas son nuevas, cuáles se pagaron y cuáles se anularon.</p></div>
@@ -551,11 +609,14 @@ const HTML = `
 </section>
 
 <!-- ESCALERA -->
-<section id="escalera" class="band-ink">
+<section id="escalera" class="band-ink esc">
+  <div class="esc-track" id="esc-track">
+  <div class="esc-sticky">
   <div class="wrap ladder-grid">
     <div class="ladder-note">
-      <div class="kicker" style="color:#8DB8FF">Escalamiento · Cleco 360</div>
+      <div class="kicker" style="color:#8DB8FF">Escalamiento · Cleco 360 y Recupera</div>
       <h2>Subimos de a un escalón. Y avisamos antes de cada uno.</h2>
+      <div class="esc-count" aria-hidden="true">Etapa <b id="esc-n">1</b> de 6</div>
       <p class="lead">La mayoría de las facturas se resuelve en los primeros pasos. Las decisiones que pueden afectar la relación con tu cliente siempre las tomas tú.</p>
       <ul>
         <li>Planes de pago: los evaluamos y te los presentamos; tú apruebas.</li>
@@ -563,7 +624,8 @@ const HTML = `
         <li>Cobranza judicial: no la hacemos. Si llega a esa etapa, pasa a tu área legal o abogado.</li>
       </ul>
     </div>
-    <div class="ladder" role="list" aria-label="Etapas de cobranza">
+    <div class="ladder" id="ladder" role="list" aria-label="Etapas de cobranza">
+      <div class="esc-line" aria-hidden="true"><span id="esc-fill"></span></div>
       <div class="rung" role="listitem"><span class="lvl">1</span><div><h3>Correos de cobranza</h3><p>Uno por semana, respetando las fechas que comprometa tu cliente.</p></div></div>
       <div class="rung" role="listitem"><span class="lvl">2</span><div><h3>Llamado y tu ejecutivo de ventas</h3><p>Tras 3 o 4 correos sin respuesta ni pago.</p></div></div>
       <div class="rung" role="listitem"><span class="lvl">3</span><div><h3>Aviso formal</h3><p>Le informamos al cliente que la deuda podría publicarse.</p></div></div>
@@ -571,6 +633,8 @@ const HTML = `
       <div class="rung" role="listitem"><span class="lvl">5</span><div><h3>Seguimos negociando</h3><p>Aun publicada, buscamos un acuerdo de pago.</p></div></div>
       <div class="rung ext" role="listitem"><span class="lvl">6</span><div><h3>Cobranza judicial <span class="you">Tú decides</span></h3><p>Sale de Cleco y la toma tu área legal.</p></div></div>
     </div>
+  </div>
+  </div>
   </div>
 </section>
 
@@ -607,7 +671,7 @@ const HTML = `
           <tr><td>Alguien negocia las difíciles</td><td class="nn">Tu equipo, si tiene tiempo</td><td class="nn">No</td><td class="y">Sí</td><td class="us y">Sí, con Cleco 360</td></tr>
           <tr><td>Cuida la relación con tu cliente</td><td class="nn">Depende</td><td class="nn">—</td><td class="nn">Publica en DICOM a los pocos días</td><td class="us y">DICOM solo si tú lo autorizas</td></tr>
           <tr><td>Ves cada gestión</td><td class="nn">En tu correo</td><td class="y">Sí</td><td class="nn">Poco</td><td class="us y">Sí, en tu portal</td></tr>
-          <tr><td>Cómo se cobra</td><td class="nn">Horas de tu equipo</td><td class="nn">Mensualidad</td><td class="nn">Comisión</td><td class="us">Básico: plan mensual · 360: comisión por factura gestionada</td></tr>
+          <tr><td>Cómo se cobra</td><td class="nn">Horas de tu equipo</td><td class="nn">Mensualidad</td><td class="nn">Comisión</td><td class="us">Básico: mensual · 360: mensual + % de vencidas recuperadas · Recupera: según tu cartera</td></tr>
         </tbody>
       </table>
     </div>
@@ -616,7 +680,7 @@ const HTML = `
       <div><h3>Alguien negocia las difíciles</h3><p class="us-a">Cleco 360: sí, con respeto.</p><p>Software de recordatorios: no.</p></div>
       <div><h3>Cuida la relación con tu cliente</h3><p class="us-a">Cleco: DICOM solo si tú lo autorizas.</p><p>Cobranza tradicional: publica en DICOM a los pocos días.</p></div>
       <div><h3>Ves cada gestión</h3><p class="us-a">Cleco: sí, en tu portal.</p><p>Planilla propia: repartida en el correo.</p></div>
-      <div><h3>Cómo se cobra</h3><p class="us-a">Cleco: plan mensual (Básico) o comisión por factura gestionada (360).</p><p>Otros: solo mensualidad, solo comisión o las horas de tu equipo.</p></div>
+      <div><h3>Cómo se cobra</h3><p class="us-a">Cleco: mensual (Básico), mensual + % de vencidas recuperadas (360) o según tu cartera vencida (Recupera).</p><p>Otros: solo mensualidad, solo comisión o las horas de tu equipo.</p></div>
     </div>
   </div>
 </section>
@@ -646,8 +710,8 @@ const HTML = `
       <details><summary>¿Hacen cobranza judicial?</summary><p>No. Cleco es cobranza extrajudicial. Si una factura llega a esa etapa, la toma tu área legal o tu abogado, y sale de nuestra gestión.</p></details>
       <details><summary>¿Por qué canales contactan a mis clientes?</summary><p>Los recordatorios automáticos se envían por correo y SMS. En Cleco 360 también llamamos por teléfono cuando no hay respuesta y, si hace falta, coordinamos con tu ejecutivo de ventas, que conoce al cliente.</p></details>
       <details><summary>¿Qué necesito para empezar?</summary><p>Tu cartera de facturas por cobrar en Excel (o exportada de tu ERP) con los datos de contacto que tengas. Si falta alguno, lo buscamos nosotros.</p></details>
-      <details><summary>¿Qué diferencia hay entre Cleco Básico y Cleco 360?</summary><p>Con Cleco Básico tu equipo sigue cobrando, pero con recordatorios automáticos por correo y SMS y toda la información en un solo lugar. Con Cleco 360 nos hacemos cargo nosotros: cobranza preventiva antes del vencimiento y negociación de las facturas morosas.</p></details>
-      <details><summary>¿Cuánto cuesta?</summary><p>Cleco Básico es un plan mensual según el tamaño de tu cartera. Cleco 360 cobra una comisión por cada factura que gestionamos, estén vencidas o no: es baja si la factura aún no vence y aumenta según los días de mora y el monto. En el diagnóstico te damos el valor exacto.</p></details>
+      <details><summary>¿Qué diferencia hay entre Básico, 360 y Recupera?</summary><p>Con Cleco Básico tu equipo sigue cobrando, pero con recordatorios automáticos por correo y SMS y toda la información en un solo lugar. Con Cleco 360 nos hacemos cargo de todo: cobranza preventiva antes del vencimiento y negociación de las facturas morosas. Con Cleco Recupera nos entregas solo las facturas que ya vencieron y nosotros las negociamos.</p></details>
+      <details><summary>¿Cuánto cuesta?</summary><p>Cleco Básico es un plan mensual según el tamaño de tu cartera. Cleco 360 es una mensualidad más un porcentaje de comisión por cada factura vencida que recuperamos. Cleco Recupera se cotiza según tu cartera vencida. En el diagnóstico te damos el valor exacto.</p></details>
       <details><summary>¿Quién aprueba un plan de pago?</summary><p>Tú. Nosotros evaluamos si la propuesta del cliente es viable y te la presentamos con nuestra recomendación.</p></details>
     </div>
   </div>
@@ -680,7 +744,7 @@ const HTML = `
         <label for="f-facturas">Facturas vencidas<select id="f-facturas" name="facturas"><option>Menos de 10</option><option>10 a 50</option><option>50 a 200</option><option>Más de 200</option></select></label>
         <label for="f-monto">Monto aproximado<select id="f-monto" name="monto"><option>Menos de $5 MM</option><option>$5 a $50 MM</option><option>$50 a $200 MM</option><option>Más de $200 MM</option></select></label>
       </div>
-      <label for="f-plan">Plan que te interesa<select id="f-plan" name="plan"><option>Todavía no sé</option><option>Cleco Básico</option><option>Cleco 360</option></select></label>
+      <label for="f-plan">Plan que te interesa<select id="f-plan" name="plan"><option>Todavía no sé</option><option>Cleco Básico</option><option>Cleco 360</option><option>Cleco Recupera</option></select></label>
       <label for="f-msg">¿Algo que debamos saber?<textarea id="f-msg" name="mensaje" placeholder="Por ejemplo: tenemos un cliente grande con tres facturas atrasadas."></textarea></label>
       <button class="btn btn-primary" type="submit" style="justify-content:center">Pedir diagnóstico gratis</button>
       <p class="form-note">Usamos tus datos solo para responderte.</p>
@@ -708,7 +772,7 @@ export default function NewLanding() {
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.add('js');
   // aparición al hacer scroll
-  var els = document.querySelectorAll('.reveal,.stagger,.ladder,.res-main');
+  var els = document.querySelectorAll('.reveal,.stagger,.res-main');
   if ('IntersectionObserver' in window && !reduce) {
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
@@ -785,6 +849,28 @@ var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)')
       setTimeout(function(){ card.classList.add('swap'); setTimeout(function(){ card.classList.remove('swap'); idx = 1; loop(); }, 450); }, 2200);
     }
   }
+  // escalamiento: los escalones aparecen según el scroll
+  var track = document.getElementById('esc-track'), rungs = document.querySelectorAll('#ladder .rung'), escN = document.getElementById('esc-n'), escFill = document.getElementById('esc-fill');
+  var lastStep = -2;
+  function onEsc(){
+    if (!track || !rungs.length) return;
+    if (reduce) { rungs.forEach(function(r){ r.classList.add('on','done'); }); return; }
+    var r = track.getBoundingClientRect(), total = r.height - innerHeight;
+    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+    var step = r.top > innerHeight * 0.35 ? -1 : Math.min(rungs.length - 1, Math.floor(p * rungs.length * 0.999 + 0.0001));
+    if (r.top <= innerHeight * 0.35 && step < 0) step = 0;
+    if (escFill) escFill.style.height = (step < 0 ? 0 : ((step + 1) / rungs.length) * 100) + '%';
+    if (step === lastStep) return; lastStep = step;
+    rungs.forEach(function(el, i){
+      el.classList.toggle('on', i <= step);
+      el.classList.toggle('cur', i === step && p < 0.995);
+      el.classList.toggle('done', p >= 0.995 && i <= step);
+    });
+    if (escN) { escN.textContent = Math.max(1, step + 1); escN.style.transform = 'scale(1.25)'; setTimeout(function(){ escN.style.transform = ''; }, 180); }
+  }
+  addEventListener('scroll', onEsc, {passive:true});
+  addEventListener('resize', onEsc); onEsc();
+
   // barra de progreso y CTA móvil
   var prog = document.getElementById('prog'), mcta = document.getElementById('mcta'), hero = document.querySelector('.hero'), form = document.getElementById('diagnostico');
   var ticking = false;
