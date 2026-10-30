@@ -403,6 +403,70 @@ footer a{color:#D6DEEA;text-decoration:none}
   form{padding:22px}
   footer .wrap{flex-direction:column;align-items:flex-start}
 }
+
+/* menú móvil */
+.burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);align-items:center;justify-content:center;cursor:pointer;padding:0}
+.burger .b-close{display:none}
+.nav-open .burger .b-open{display:none}
+.nav-open .burger .b-close{display:block}
+.m-menu{display:none}
+@media (max-width:900px){
+  .burger{display:inline-flex}
+  .m-menu{display:block;position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 24px 40px -24px rgba(15,23,42,.35);max-height:0;overflow:hidden;visibility:hidden;transition:max-height .35s ease,visibility 0s .35s}
+  .nav-open .m-menu{max-height:calc(100vh - 70px);overflow-y:auto;visibility:visible;transition:max-height .35s ease}
+  .m-menu nav{display:grid;padding:8px max(20px,env(safe-area-inset-left,0px)) 20px}
+  .m-menu nav a{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);font-size:18px;font-weight:600;text-decoration:none;color:var(--ink)}
+  .m-menu nav > a::after{content:"→";color:var(--blue);font-weight:500}
+  .m-menu .m-foot{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .m-menu .m-foot a{flex:1 1 auto;justify-content:center}
+}
+@media (max-width:400px){.burger{width:38px;height:38px}}
+
+/* clientes: huincha en movimiento */
+.partners{padding-block:44px 52px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+.partners-t{text-align:center;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:28px}
+.marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.marquee-track{display:flex;justify-content:center}
+.marquee-track.run{width:max-content;justify-content:flex-start;animation:marquee 28s linear infinite}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-set{display:flex;flex:none}
+@keyframes marquee{to{transform:translateX(-50%)}}
+.pt{flex:none;display:grid;justify-items:center;gap:12px;margin:0 clamp(28px,5vw,64px)}
+.pt-logo{height:56px;display:flex;align-items:center;gap:10px}
+.pt-logo img{height:100%;width:auto}
+.pt-logo img.mer{height:26px}
+.pt-logo img.hok{height:46px;border-radius:12px}
+.pt-logo b{font-size:26px;font-weight:800;letter-spacing:-.02em;color:#1A1446}
+.pt-name{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.pt-name small{display:block;text-align:center;font-weight:500;color:var(--muted);font-size:12px}
+@media (max-width:640px){.partners{padding-block:32px 36px}.partners-t{margin-bottom:20px}.pt-logo{height:44px}.pt-logo img.mer{height:20px}.pt-logo img.hok{height:38px}.pt-logo b{font-size:21px}.marquee-track{animation-duration:20s}}
+@media (prefers-reduced-motion:reduce){.marquee{-webkit-mask-image:none;mask-image:none}.marquee-track{width:auto;justify-content:center;flex-wrap:wrap}.marquee-set[aria-hidden]{display:none}.marquee-set{flex-wrap:wrap;justify-content:center;row-gap:24px}}
+
+/* redes */
+.social{display:flex;gap:10px;align-items:center}
+.social a{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid #334155;color:#D6DEEA;transition:background .15s,color .15s,border-color .15s}
+.social a:hover{background:#fff;color:var(--ink);border-color:#fff}
+.ig-link{display:inline-flex;align-items:center;gap:8px}
+
+/* escalamiento en celular y tablet: sin fijar la pantalla, los escalones se encienden al pasar */
+@media (max-width:960px){
+  .js .esc-track{height:auto}
+  .js .esc-sticky{position:static;min-height:0;display:block;padding-block:64px}
+  .esc .ladder-grid{gap:32px}
+  .esc .ladder-note .lead{display:block}
+  .esc-count{display:none}
+  .js .esc .rung{opacity:.35;transform:translateY(14px);transition:opacity .45s,transform .5s cubic-bezier(.2,.8,.2,1),background .35s,border-color .35s,box-shadow .35s}
+  .js .esc .rung.on{opacity:1;transform:none}
+  .js .esc .rung.cur{transform:none;box-shadow:0 18px 36px -18px rgba(37,99,235,.8)}
+  .js .esc .rung p{max-height:none;opacity:1}
+  .js .esc .rung.cur .you{animation:none}
+  .esc-line span{transition:height .2s linear}
+}
+@media (max-width:640px){
+  .js .esc-sticky{padding-block:56px}
+  .esc .ladder-note h2{font-size:30px}
+  .esc .ladder-note .lead{font-size:16px}
+}
 `;
 
 const HTML = `
@@ -413,6 +477,7 @@ const HTML = `
   <div class="wrap">
     <a class="logo" href="#top" aria-label="Cleco, inicio"><img src="/landing/logo-dark.png" alt="cleCo"></a>
     <nav class="nav-links" aria-label="Secciones">
+      <a href="#clientes">Clientes</a>
       <a href="#como-funciona">Cómo funciona</a>
       <a href="#escalera">Escalamiento</a>
       <a href="#planes">Planes</a>
@@ -422,7 +487,22 @@ const HTML = `
     <div class="nav-cta">
       <a class="login" href="/auth/login"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.6 4.1-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span class="login-l">Ingresar al portal</span><span class="login-s">Ingresar</span></a>
       <a class="btn btn-primary" href="#diagnostico"><span class="cta-long">Diagnóstico gratis</span><span class="cta-short">Diagnóstico</span></a>
+      <button class="burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="m-menu"><svg class="b-open" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="b-close" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
+  </div>
+  <div class="m-menu" id="m-menu">
+    <nav aria-label="Secciones">
+      <a href="#clientes">Clientes</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#escalera">Escalamiento</a>
+      <a href="#planes">Planes</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#preguntas">Preguntas</a>
+      <div class="m-foot">
+        <a class="btn btn-ghost" href="/auth/login">Ingresar al portal</a>
+        <a class="btn btn-ghost ig-link" href="https://www.instagram.com/cleco.cl/" target="_blank" rel="noopener"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".6" fill="currentColor"/></svg>Instagram</a>
+      </div>
+    </nav>
   </div>
 </header>
 
@@ -475,6 +555,20 @@ const HTML = `
         <div><span class="wk-n" id="wk3">12</span><span class="wk-l">facturas pagadas</span></div>
       </div>
       <p class="inv-caption">Ejemplo ilustrativo de una semana de gestión</p>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENTES -->
+<section class="partners" id="clientes" aria-label="Empresas que confían en Cleco">
+  <p class="partners-t">Empresas que ya confían en Cleco</p>
+  <div class="marquee">
+    <div class="marquee-track">
+      <div class="marquee-set">
+        <div class="pt"><span class="pt-logo"><img class="mer" src="/landing/cliente-el-mercurio.svg" alt="El Mercurio"></span><span class="pt-name">El Mercurio<small>Medios</small></span></div>
+        <div class="pt"><span class="pt-logo"><img class="hok" src="/landing/cliente-hoktus.png" alt=""><b>hoktus</b></span><span class="pt-name">Hoktus<small>Reclutamiento</small></span></div>
+        <div class="pt"><span class="pt-logo"><img src="/landing/cliente-nuevos-caminos.png" alt="Nuevos Caminos"></span><span class="pt-name">Nuevos Caminos<small>Educación</small></span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -729,7 +823,7 @@ const HTML = `
         <div><span>2</span><p>El monto total y hace cuánto vencieron.</p></div>
         <div><span>3</span><p>Te respondemos con un plan para tu caso. Sin compromiso.</p></div>
       </div>
-      <p style="margin-top:28px;color:#AEB8CA;font-size:15px">¿Prefieres escribirnos? <b style="color:#fff">contacto@cleco.cl</b></p>
+      <p style="margin-top:28px;color:#AEB8CA;font-size:15px">¿Prefieres escribirnos? <b style="color:#fff">contacto@cleco.cl</b> · <a class="ig-link" href="https://www.instagram.com/cleco.cl/" target="_blank" rel="noopener" style="color:#fff;font-weight:700"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".6" fill="currentColor"/></svg>@cleco.cl</a></p>
     </div>
     <form id="lead" novalidate>
       <div class="row">
@@ -761,6 +855,7 @@ const HTML = `
     <img src="/landing/logo-white.png" alt="cleCo">
     <span>Cobranza que no duele · Santiago, Chile · <a href="mailto:contacto@cleco.cl">contacto@cleco.cl</a></span>
     <span><a href="/auth/login">Portal de clientes</a> · <a href="/nosotros">Nosotros</a></span>
+    <div class="social" aria-label="Redes sociales"><a href="https://www.instagram.com/cleco.cl/" target="_blank" rel="noopener" aria-label="Instagram de Cleco"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".6" fill="currentColor"/></svg></a></div>
   </div>
 </footer>
 
@@ -851,10 +946,21 @@ var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)')
   }
   // escalamiento: los escalones aparecen según el scroll
   var track = document.getElementById('esc-track'), rungs = document.querySelectorAll('#ladder .rung'), escN = document.getElementById('esc-n'), escFill = document.getElementById('esc-fill');
-  var lastStep = -2;
+  var lastStep = -2, escMobile = window.matchMedia ? matchMedia('(max-width:960px)') : {matches:false};
+  var ladderEl = document.getElementById('ladder');
+  function onEscMobile(){
+    // se enciende cada escalón cuando cruza el 60% de la pantalla y la línea avanza con el scroll
+    var mid = innerHeight * 0.6, step = -1;
+    rungs.forEach(function(el, i){ if (el.getBoundingClientRect().top < mid) step = i; });
+    var lr = ladderEl.getBoundingClientRect();
+    if (escFill) escFill.style.height = Math.min(100, Math.max(0, (mid - lr.top) / lr.height * 100)) + '%';
+    if (step === lastStep) return; lastStep = step;
+    rungs.forEach(function(el, i){ el.classList.toggle('on', i <= step); el.classList.toggle('cur', i === step); el.classList.remove('done'); });
+  }
   function onEsc(){
     if (!track || !rungs.length) return;
     if (reduce) { rungs.forEach(function(r){ r.classList.add('on','done'); }); return; }
+    if (escMobile.matches) { onEscMobile(); return; }
     var r = track.getBoundingClientRect(), total = r.height - innerHeight;
     var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
     var step = r.top > innerHeight * 0.35 ? -1 : Math.min(rungs.length - 1, Math.floor(p * rungs.length * 0.999 + 0.0001));
@@ -869,7 +975,24 @@ var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)')
     if (escN) { escN.textContent = Math.max(1, step + 1); escN.style.transform = 'scale(1.25)'; setTimeout(function(){ escN.style.transform = ''; }, 180); }
   }
   addEventListener('scroll', onEsc, {passive:true});
-  addEventListener('resize', onEsc); onEsc();
+  addEventListener('resize', function(){ lastStep = -2; onEsc(); }); onEsc();
+
+  // huincha de clientes: se clona el grupo para que el loop no tenga cortes
+  var mtrack = document.querySelector('.marquee-track');
+  if (mtrack && !reduce) {
+    var mset = mtrack.querySelector('.marquee-set');
+    for (var c = 0; c < 3; c++) { var cl = mset.cloneNode(true); cl.setAttribute('aria-hidden', 'true'); cl.querySelectorAll('img').forEach(function(im){ im.alt = ''; }); mtrack.appendChild(cl); }
+    mtrack.classList.add('run');
+  }
+  // menú móvil
+  var nav = document.querySelector('header.nav'), burger = nav && nav.querySelector('.burger');
+  function setMenu(open){ nav.classList.toggle('nav-open', open); burger.setAttribute('aria-expanded', open); burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú'); }
+  if (burger) {
+    burger.addEventListener('click', function(){ setMenu(!nav.classList.contains('nav-open')); });
+    nav.querySelectorAll('.m-menu a').forEach(function(a){ a.addEventListener('click', function(){ setMenu(false); }); });
+    addEventListener('keydown', function(e){ if (e.key === 'Escape') setMenu(false); });
+  }
+
 
   // barra de progreso y CTA móvil
   var prog = document.getElementById('prog'), mcta = document.getElementById('mcta'), hero = document.querySelector('.hero'), form = document.getElementById('diagnostico');
