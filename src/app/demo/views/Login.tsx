@@ -52,7 +52,10 @@ export function Login({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="flex flex-col bg-white px-6 py-10 sm:px-12">
-        <img src="/landing/logo-dark.png" alt="Cleco" className="h-8 w-auto self-start lg:hidden" />
+        <div className="flex items-center justify-between">
+          <img src="/landing/logo-dark.png" alt="Cleco" className="h-8 w-auto lg:invisible" />
+          <a href="/" className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft className="h-4 w-4" /> Volver a cleco.cl</a>
+        </div>
         <div className="m-auto w-full max-w-[400px]">
           {step === "cred" && (
             <form onSubmit={submit} className="fade-up grid gap-5">

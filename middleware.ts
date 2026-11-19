@@ -1,10 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Mientras el portal real no está listo, el login y el panel muestran la maqueta (/demo).
+// Para volver al portal real con Supabase, cambiar a false.
+const PORTAL_EN_MAQUETA = true;
+
 export async function middleware(request: NextRequest) {
   // Maqueta pública del portal (/demo): datos ficticios, no necesita sesión real
   const path = request.nextUrl.pathname;
   if (path === "/demo" || path.startsWith("/demo/")) return NextResponse.next();
+  if (PORTAL_EN_MAQUETA && (path.startsWith("/auth") || path.startsWith("/dashboard"))) {
+    return NextResponse.redirect(new URL("/demo", request.url));
+  }
 
   let supabaseResponse = NextResponse.next({ request });
 
