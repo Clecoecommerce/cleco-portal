@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Maqueta pública del portal (/demo): datos ficticios, no necesita sesión real
+  const path = request.nextUrl.pathname;
+  if (path === "/demo" || path.startsWith("/demo/")) return NextResponse.next();
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
